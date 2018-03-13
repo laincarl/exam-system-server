@@ -7,7 +7,18 @@ const router = express.Router();
 
 require('../passport')(passport);
 
-// 
+//取所有试题
+router.get('/', (req, res) => {
+  Question.find({}, (err, data) => {
+    if (err) {
+      console.log("err");
+    } else {
+      res.json(data);
+      // console.log(data);
+    }
+  })
+})
+// 批量插入新的试题
 router.post('/new', passport.authenticate('bearer', { session: false }), (req, res) => {
   if (!req.body) {
     console.log(req.body);
@@ -35,7 +46,7 @@ router.post('/new', passport.authenticate('bearer', { session: false }), (req, r
         if (err) {
           console.log(err);
           throw err
-        }; 
+        };
         res.json({ success: true, message: '导入成功!' });
       });
       // item.itemId is the max value

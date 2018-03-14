@@ -7,9 +7,6 @@ const BankSchema = new Schema({
   title: {
     type: String,
   },
-  answers: [{
-    type: String,
-  }]
 })
 // 在创建文档时，获取自增ID值
 BankSchema.pre('save', function (next) {

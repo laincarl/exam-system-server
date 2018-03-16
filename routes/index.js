@@ -6,6 +6,7 @@ module.exports = (app) => {
   app.use('/user', require('./users')); // 在所有users路由前加/api
   app.use('/questions', require('./questions')); 
   app.use('/banks', require('./banks')); 
+  app.use('/exams', require('./exams')); 
 };
 
 

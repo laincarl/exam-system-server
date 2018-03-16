@@ -1,5 +1,5 @@
 const express = require('express');
-const Bank = require('../models/Bank');
+const Bank = require('../models/bank');
 const jwt = require('jsonwebtoken');
 const config = require('../config');
 const passport = require('passport');

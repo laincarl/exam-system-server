@@ -1,6 +1,7 @@
 const mongoose = require('mongoose');
 const { Schema } = mongoose;
 var Sequence = require('./sequence');
+const Question = require('./question');
 
 function dateFormat(fmt, date) { //author: meizz   
   var o = {
@@ -34,7 +35,8 @@ const ExamSchema = new Schema({
     get: format
   },
   questions: [{
-    id: Number,
+    type: Schema.Types.ObjectId,
+    ref: 'Question',
   }],
 }, {
     toObject: { getters: true, setters: true },

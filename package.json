@@ -3,11 +3,14 @@
     "version": "0.0.0",
     "private": true,
     "scripts": {
-        "start": "./node_modules/.bin/nodemon ./app.js"
+        "start-db": "mongod --dbpath \"D:/MongoDB/data/db\"  --logpath \"D:/MongoDB/log/log.txt\"",
+        "start-server": "./node_modules/.bin/nodemon ./app.js",
+        "start": "concurrently \"npm run start-db\" \"wait-on tcp:27017 && npm run start-server\""
     },
     "dependencies": {
         "bcrypt": "^1.0.3",
         "body-parser": "~1.18.2",
+        "concurrently": "^3.5.1",
         "cookie-parser": "~1.4.3",
         "debug": "~2.6.9",
         "ejs": "~2.5.7",
@@ -21,6 +24,7 @@
         "nodemon": "^1.17.1",
         "passport": "^0.4.0",
         "passport-http-bearer": "^1.0.1",
-        "serve-favicon": "~2.4.5"
+        "serve-favicon": "~2.4.5",
+        "wait-on": "^2.1.0"
     }
 }

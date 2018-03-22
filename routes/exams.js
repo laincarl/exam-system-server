@@ -1,6 +1,7 @@
 const express = require('express');
 const Exam = require('../models/exam');
 const Question = require('../models/question');
+const Result = require('../models/result');
 const jwt = require('jsonwebtoken');
 const config = require('../config');
 const passport = require('passport');
@@ -46,9 +47,14 @@ router.get('/exam', (req, res) => {
   Exam.findOne({ id: req.query.id }).populate({
     path: 'questions',
     select: 'id title selects'
-  }).exec((err, story) => {
+  }).exec((err, exam) => {
     if (err) console.log(err);
-    res.json(story);
+    if (exam) {
+      res.json(exam);
+    } else {
+      res.status(404);
+      res.json({ message: '考试不存在' })
+    }
     // console.log(story.questions);
   })
   // Exam.find({}, ['-_id', '-questions._id'], (err, data) => {
@@ -59,10 +65,25 @@ router.get('/exam', (req, res) => {
   //   }
   // })
 })
-router.post('/submit', (req, res) => {
+//取单个考试结果
+router.get('/result', passport.authenticate('bearer', { session: false }), (req, res) => {
+  // console.log(res.query)
+  const { name } = req.user;
+  Result.findOne({ exam_id: req.query.id, name }, (err, data) => {
+    if (err) console.log(err);
+    if (data) {
+      res.json(data);
+    } else {
+      res.status(404);
+      res.json({ message: '考试结果不存在' })
+    }
+  })
+})
+router.post('/submit', passport.authenticate('bearer', { session: false }), (req, res) => {
   // console.log(req.body);
   //前端传回来题号组成的数组
-  const questions = req.body;
+  const { id, title, questions } = req.body;
+  const { name } = req.user;
   const ids = questions.map(one => one.id);
   Question.find({ id: { $in: ids } }, (err, data) => {
     if (err) {
@@ -74,15 +95,34 @@ router.post('/submit', (req, res) => {
       questions.forEach(one => {
         obj[one.id] = one.answers[0];
       })
+      const results = [];
       data.forEach(one => {
+        const temp = { ...one._doc };
+        delete one._id;
+        temp.choices = [obj[one.id]];
         if (one.answers[0] === obj[one.id]) {
-          console.log('对',one.title,one.answers)
+          console.log('对', one.title, one.answers)
           score += 1
-        }else{
-          console.log('错',one.title,one.answers)
+        } else {
+          console.log('错', one.title, one.answers)
         }
+        console.log(temp);
+        results.push(temp);
       })
-      res.send({ score });
+      const newResult = new Result({
+        exam_id: id,
+        exam_title: title,
+        name,
+        score,
+        results
+      })
+      newResult.save((err) => {
+        if (err) {
+          console.log(err);
+          throw err;
+        }
+        res.json({ score, results });
+      });
     }
   })
 })

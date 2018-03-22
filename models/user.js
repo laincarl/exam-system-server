@@ -11,8 +11,13 @@ const UserSchema = new Schema({
     type: String,
     required: true
   },
+  role: {
+    type: String,
+    required: true,
+  },
   url: {
-    type: String,    
+    type: String,
+    default:'images/default.png'
   },
   token: {
     type: String

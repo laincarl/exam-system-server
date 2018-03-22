@@ -68,8 +68,11 @@ router.get('/exam', (req, res) => {
 //取单个考试结果
 router.get('/result', passport.authenticate('bearer', { session: false }), (req, res) => {
   // console.log(res.query)
-  const { name } = req.user;
-  Result.findOne({ exam_id: req.query.id, name }, (err, data) => {
+  const { _id } = req.user;
+  Result.findOne({ exam_id: req.query.id, user: _id }, ['-_id','-__v']).populate({
+    path: 'user',
+    select: 'name -_id'
+  }).exec((err, data) => {
     if (err) console.log(err);
     if (data) {
       res.json(data);
@@ -83,7 +86,7 @@ router.post('/submit', passport.authenticate('bearer', { session: false }), (req
   // console.log(req.body);
   //前端传回来题号组成的数组
   const { id, title, questions } = req.body;
-  const { name } = req.user;
+  const { _id } = req.user;
   const ids = questions.map(one => one.id);
   Question.find({ id: { $in: ids } }, (err, data) => {
     if (err) {
@@ -101,18 +104,18 @@ router.post('/submit', passport.authenticate('bearer', { session: false }), (req
         delete one._id;
         temp.choices = [obj[one.id]];
         if (one.answers[0] === obj[one.id]) {
-          console.log('对', one.title, one.answers)
+          // console.log('对', one.title, one.answers)
           score += 1
         } else {
-          console.log('错', one.title, one.answers)
+          // console.log('错', one.title, one.answers)
         }
-        console.log(temp);
+        // console.log(temp);
         results.push(temp);
       })
       const newResult = new Result({
         exam_id: id,
         exam_title: title,
-        name,
+        user: _id,
         score,
         results
       })

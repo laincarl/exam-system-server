@@ -11,6 +11,26 @@ require('../passport')(passport);
 //只能以Form形式上传name为mFile的文件
 //var upload = multer({ dest: 'upload/'}).single('mFile');
 var upload = multer({ dest: 'temp/' }).any();
+// 管理员添加账户
+router.post('/adduser', passport.authenticate('bearer', { session: false }), (req, res) => {
+  if (!req.body.name || !req.body.password || !req.user.role === 'admin') {
+    console.log(req.body.name);
+    res.json({ success: false, message: '请输入账号密码.' });
+  } else {
+    var newUser = new User({
+      role: req.body.role,
+      name: req.body.name,
+      password: req.body.password
+    });
+    // 保存用户账号
+    newUser.save((err) => {
+      if (err) {
+        return res.json({ success: false, message: '注册失败!' });
+      }
+      res.json({ success: true, message: '成功创建新用户!' });
+    });
+  }
+});
 // 注册账户
 router.post('/signup', (req, res) => {
   if (!req.body.name || !req.body.password) {
@@ -18,6 +38,7 @@ router.post('/signup', (req, res) => {
     res.json({ success: false, message: '请输入您的账号密码.' });
   } else {
     var newUser = new User({
+      role: 'student',
       name: req.body.name,
       password: req.body.password
     });
@@ -60,6 +81,7 @@ router.post('/accesstoken', (req, res) => {
             success: true,
             message: '验证成功!',
             token: 'Bearer ' + token,
+            role: user.role,
             name: user.name
           });
         } else {
@@ -174,8 +196,8 @@ router.get('/download', function (req, res) {
 router.get('/info',
   passport.authenticate('bearer', { session: false }),
   function (req, res) {
-    const { name, url } = req.user;
-    res.json({ name, url: `${config.server}${url}` });
+    const { name, url, role } = req.user;
+    res.json({ name, role, url: `${config.server}${url}` });
   });
 
 module.exports = router;

@@ -10,12 +10,11 @@ const mongoose = require('mongoose');
 const { Schema } = mongoose;
 var Sequence = require('./sequence');
 const Question = require('./question');
-
 const ResultSchema = new Schema({
   id: { type: Number, index: { unique: true } },
+  user: { type: Schema.Types.ObjectId, ref: 'User' },
   exam_id: { type: Number, required: true },
   exam_title: { type: String, required: true },
-  name: { type: String, required: true },
   score: { type: Number, required: true },
   results: [],
 })

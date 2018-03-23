@@ -27,8 +27,8 @@ function getRandomFromArr(arr, num) {
 }
 
 //取所有考试
-router.get('/', (req, res) => {
-  Exam.find({}).populate('questions').exec((err, story) => {
+router.get('/', passport.authenticate('bearer', { session: false }), (req, res) => {
+  Exam.find({}).exec((err, story) => {
     if (err) console.log(err);
     res.json(story);
     // console.log(story.questions);
@@ -42,7 +42,7 @@ router.get('/', (req, res) => {
   // })
 })
 //取单个考试
-router.get('/exam', (req, res) => {
+router.get('/exam', passport.authenticate('bearer', { session: false }), (req, res) => {
   // console.log(res.query)
   Exam.findOne({ id: req.query.id }).populate({
     path: 'questions',
@@ -69,7 +69,7 @@ router.get('/exam', (req, res) => {
 router.get('/result', passport.authenticate('bearer', { session: false }), (req, res) => {
   // console.log(res.query)
   const { _id } = req.user;
-  Result.findOne({ exam_id: req.query.id, user: _id }, ['-_id','-__v']).populate({
+  Result.findOne({ exam_id: req.query.id, user: _id }, ['-_id', '-__v']).populate({
     path: 'user',
     select: 'name -_id'
   }).exec((err, data) => {
@@ -130,7 +130,7 @@ router.post('/submit', passport.authenticate('bearer', { session: false }), (req
   })
 })
 // 建立新的考试
-router.post('/new', (req, res) => {
+router.post('/new', passport.authenticate('bearer', { session: false }), (req, res) => {
   if (!req.body) {
     console.log(req.body);
     res.json({ success: false, message: '请输入您的账号密码.' });

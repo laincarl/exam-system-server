@@ -5,6 +5,7 @@ const jwt = require('jsonwebtoken');
 const config = require('../config');
 const passport = require('passport');
 var multer = require('multer');
+const checkPermission = require('../middlewares/checkPermission');
 const router = express.Router();
 
 require('../passport')(passport);
@@ -12,15 +13,17 @@ require('../passport')(passport);
 //var upload = multer({ dest: 'upload/'}).single('mFile');
 var upload = multer({ dest: 'temp/' }).any();
 // 管理员添加账户
-router.post('/adduser', passport.authenticate('bearer', { session: false }), (req, res) => {
-  if (!req.body.name || !req.body.password || !req.user.role === 'admin') {
+router.post('/adduser', passport.authenticate('bearer', { session: false }), checkPermission('admin'), (req, res) => {
+  const { name, real_name, role, password } = req.body;
+  if (!name || !real_name || !role || !password) {
     console.log(req.body.name);
     res.json({ success: false, message: '请输入账号密码.' });
   } else {
     var newUser = new User({
-      role: req.body.role,
-      name: req.body.name,
-      password: req.body.password
+      role,
+      real_name,
+      name,
+      password
     });
     // 保存用户账号
     newUser.save((err) => {
@@ -33,18 +36,20 @@ router.post('/adduser', passport.authenticate('bearer', { session: false }), (re
 });
 // 注册账户
 router.post('/signup', (req, res) => {
-  if (!req.body.name || !req.body.password) {
+  if (!req.body.name || !req.body.password || !req.body.real_name) {
     console.log(req.body.name);
     res.json({ success: false, message: '请输入您的账号密码.' });
   } else {
     var newUser = new User({
       role: 'student',
       name: req.body.name,
+      real_name: req.body.real_name,
       password: req.body.password
     });
     // 保存用户账号
     newUser.save((err) => {
       if (err) {
+        console.log(err);
         return res.json({ success: false, message: '注册失败!' });
       }
       res.json({ success: true, message: '成功创建新用户!' });
@@ -196,8 +201,20 @@ router.get('/download', function (req, res) {
 router.get('/info',
   passport.authenticate('bearer', { session: false }),
   function (req, res) {
-    const { name, url, role } = req.user;
-    res.json({ name, role, url: `${config.server}${url}` });
+    const { name, real_name, url, role } = req.user;
+    res.json({ name, real_name, role, url: `${config.server}${url}` });
   });
-
+router.get('/alluser',
+  passport.authenticate('bearer', { session: false }),
+  checkPermission('admin'),
+  function (req, res) {
+    User.find({}, ['id', 'name', 'real_name', 'role'], (err, data) => {
+      if (err) {
+        console.log("err");
+      } else {
+        res.json(data);
+        // console.log(data);
+      }
+    })
+  });
 module.exports = router;

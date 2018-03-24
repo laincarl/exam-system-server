@@ -1,11 +1,17 @@
 const mongoose = require('mongoose');
 const { Schema } = mongoose;
+var Sequence = require('./sequence');
 const bcrypt = require('bcrypt');
 const UserSchema = new Schema({
+  id: { type: Number, index: { unique: true } },
   name: {
     type: String,
     required: true,
     unique: true
+  },
+  real_name:{
+    type: String,
+    required: true,
   },
   password: {
     type: String,
@@ -43,6 +49,20 @@ UserSchema.pre('save', function (next) {
     return next();
   }
 });
+// 在创建文档时，获取自增ID值
+UserSchema.pre('save', function (next) {
+  var self = this;
+  if (self.isNew) {
+    Sequence.increment('User', function (err, result) {
+      if (err)
+        throw err;
+      self.id = result.value.next;
+      next();
+    });
+  } else {
+    next();
+  }
+})
 // 校验用户输入密码是否正确
 UserSchema.methods.comparePassword = function (passw, cb) {
   bcrypt.compare(passw, this.password, (err, isMatch) => {

@@ -6,6 +6,7 @@ const config = require('../config');
 const passport = require('passport');
 var multer = require('multer');
 const checkPermission = require('../middlewares/checkPermission');
+const bcrypt = require('bcrypt');
 const router = express.Router();
 
 require('../passport')(passport);
@@ -31,6 +32,38 @@ router.post('/adduser', passport.authenticate('bearer', { session: false }), che
         return res.json({ success: false, message: '注册失败!' });
       }
       res.json({ success: true, message: '成功创建新用户!' });
+    });
+  }
+});
+router.delete('/deluser', passport.authenticate('bearer', { session: false }), checkPermission('admin'), (req, res) => {
+  const id = req.query.id;
+  if (!id) {
+    res.json({ success: false, message: 'id为空' });
+  } else {
+    User.remove({ id: Number(id) }, (err) => {
+      if (err) {
+        console.log(err);
+        return res.json({ success: false, message: '移除失败!' });
+      }
+      res.json({ success: true, message: '移除成功!' });
+    });
+  }
+});
+router.put('/edituser', passport.authenticate('bearer', { session: false }), checkPermission('admin'), (req, res) => {
+  const { id, name, real_name, role, initPassword } = req.body;
+  if (!id || !name || !real_name || !role) {
+    console.log(req.body.name);
+    res.json({ success: false, message: '请输入账号密码.' });
+  } else {
+    // 保存用户账号
+
+    const needUpdate = initPassword ? { name, real_name, role, password: bcrypt.hashSync(name, 10) } : { name, real_name, role };
+    User.update({ id }, { $set: needUpdate }, (err) => {
+      if (err) {
+        console.log(err);
+        return res.json({ success: false, message: '修改失败!' });
+      }
+      res.json({ success: true, message: '修改成功!' });
     });
   }
 });
@@ -204,11 +237,25 @@ router.get('/info',
     const { name, real_name, url, role } = req.user;
     res.json({ name, real_name, role, url: `${config.server}${url}` });
   });
+router.get('/',
+  passport.authenticate('bearer', { session: false }),
+  checkPermission('admin'),
+  function (req, res) {
+    const id = req.query.id;
+    User.findOne({ id }, ['id', 'name', 'real_name', 'role', '-_id'], (err, data) => {
+      if (err) {
+        console.log("err");
+      } else {
+        res.json(data);
+        // console.log(data);
+      }
+    })
+  });
 router.get('/alluser',
   passport.authenticate('bearer', { session: false }),
   checkPermission('admin'),
   function (req, res) {
-    User.find({}, ['id', 'name', 'real_name', 'role'], (err, data) => {
+    User.find({}, ['id', 'name', 'real_name', 'role', '-_id'], (err, data) => {
       if (err) {
         console.log("err");
       } else {

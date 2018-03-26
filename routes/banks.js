@@ -7,7 +7,8 @@ require("../passport")(passport);
 
 //取所有试题
 router.get("/", (req, res) => {
-	Bank.find({}, (err, data) => {
+	const type = req.query.type;
+	Bank.find({ type }, ["-_id", "-__v"], (err, data) => {
 		if (err) {
 			console.log("err");
 		} else {
@@ -22,8 +23,9 @@ router.post("/new", passport.authenticate("bearer", { session: false }), (req, r
 		console.log(req.body);
 		res.json({ success: false, message: "请输入您的账号密码." });
 	} else {
-		const { title } = req.body;
+		const { title, type } = req.body;
 		var newBank = new Bank({
+			type,
 			title,
 		});
 		newBank.save((err) => {

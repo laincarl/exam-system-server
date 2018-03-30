@@ -8,7 +8,7 @@ const routes = require("./routes"); //路由配置
 const config = require("./config"); //全局配置
 const cookieParser = require("cookie-parser");
 const bodyParser = require("body-parser");
-
+// const CamelCaseToUnderScoreCase=require("./middlewares/CamelCaseToUnderScoreCase");
 let port = process.env.PORT || 8000;
 
 const app = express();
@@ -18,8 +18,9 @@ app.use(cookieParser());
 app.use(express.static(path.join(__dirname, "public")));
 
 app.use(passport.initialize());// 初始化passport模块
-app.use(bodyParser.json()); // 调用bodyParser模块以便程序正确解析body传入值
 app.use(bodyParser.urlencoded({ extended: false }));
+app.use(bodyParser.json()); // 调用bodyParser模块以便程序正确解析body传入值
+// app.use(CamelCaseToUnderScoreCase());
 routes(app); // 路由引入
 
 mongoose.Promise = global.Promise;

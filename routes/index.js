@@ -7,6 +7,7 @@ module.exports = (app) => {
 	app.use("/questions", require("./questions")); 
 	app.use("/banks", require("./banks")); 
 	app.use("/exams", require("./exams")); 
+	app.use("/papers", require("./papers")); 
 };
 
 

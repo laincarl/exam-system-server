@@ -11,18 +11,16 @@ require("../passport")(passport);
 
 function getRandomFromArr(arr, num) {
 	let len = arr.length;
-	// console.log(arr);
 	if (len <= num) {
 		return arr;
 	} else {
 		let result = [];
-		for (let i = 0; i < 10; i++) {
+		for (let i = 0; i < num; i++) {
 			let index = ~~(Math.random() * len) + i;
 			result[i] = arr[index];
 			arr[index] = arr[i];
 			len--;
 		}
-		// console.log(result);
 		return result;
 	}
 }
@@ -46,11 +44,11 @@ router.get("/", passport.authenticate("bearer", { session: false }), (req, res) 
 	// })
 });
 //取单个试卷
-router.get("/exam", passport.authenticate("bearer", { session: false }), (req, res) => {
+router.get("/paper", passport.authenticate("bearer", { session: false }), (req, res) => {
 	// console.log(res.query)
 	Paper.findOne({ id: req.query.id }).populate({
-		path: "questions",
-		select: "id title selects"
+		path: "parts.questions",
+		select: "id title selects answers"
 	}).exec((err, exam) => {
 		if (err) console.log(err);
 		if (exam) {
@@ -143,17 +141,18 @@ router.post("/new", passport.authenticate("bearer", { session: false }), (req, r
 		Promise.all(
 			parts.map(part => {
 				const { bank_id, num } = part;
-				return new Promise((resolve,reject) => {
+				// console.log(bank_id, num);
+				return new Promise((resolve) => {
 					Question.find({ bank_id }, ["_id", "id"], (err, data) => {
 						if (err) {
 							console.log("err");
 						} else {
 							part.questions = getRandomFromArr(data, num);
-							console.log(part.questions);
+							// console.log(part.questions);
 							resolve();
 						}
 					});
-				})
+				});
 			})
 		).then(() => {
 			var newPaper = new Paper({
@@ -168,7 +167,7 @@ router.post("/new", passport.authenticate("bearer", { session: false }), (req, r
 				res.json({ success: true, message: "创建成功!" });
 			});
 
-		})
+		});
 
 
 

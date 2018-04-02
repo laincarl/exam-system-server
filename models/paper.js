@@ -38,6 +38,10 @@ const PaperSchema = new Schema({
 			type: String,
 			required: true
 		},
+		num: {
+			type: Number,
+			required: true
+		},
 		score: {
 			type: Number,
 			required: true
@@ -54,9 +58,9 @@ const PaperSchema = new Schema({
 		]
 	}],
 }, {
-		toObject: { getters: true, setters: true },
-		toJSON: { getters: true, setters: true }
-	});
+	toObject: { getters: true, setters: true },
+	toJSON: { getters: true, setters: true }
+});
 //取数据getter生效，toJSON和toObject是必须的
 // 在创建文档时，获取自增ID值
 PaperSchema.pre("save", function (next) {

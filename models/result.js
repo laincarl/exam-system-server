@@ -13,9 +13,33 @@ const ResultSchema = new Schema({
 	id: { type: Number, index: { unique: true } },
 	user: { type: Schema.Types.ObjectId, ref: "User" },
 	exam_id: { type: Number, required: true },
+	paper_id: { type: Number, required: true },
 	exam_title: { type: String, required: true },
-	score: { type: Number, required: true },
-	results: [],
+	user_score: { type: Number, required: true },
+	total_score: { type: Number, required: true },
+	parts: [{
+		type: {
+			type: String,
+			required: true
+		},
+		num: {
+			type: Number,
+			required: true
+		},
+		score: {
+			type: Number,
+			required: true
+		},
+		bank_id: {
+			type: Number,
+			required: true,
+		},
+		questions: [
+			{
+				type: Schema.Types.Mixed,				
+			}
+		]
+	}],
 });
 //取数据getter生效，toJSON和toObject是必须的
 // 在创建文档时，获取自增ID值

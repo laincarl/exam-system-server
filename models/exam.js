@@ -28,15 +28,24 @@ const ExamSchema = new Schema({
 		type: String,
 		required: true
 	},
+	paper_id: {
+		type: Number,
+		required: true
+	},
+	limit_time: {
+		type: Number,
+		required: true
+	},
 	create_time: {
 		type: Date,
 		default: Date.now,
 		get: format
 	},
-	questions: [{
-		type: Schema.Types.ObjectId,
-		ref: "Question",
-	}],
+	range: {
+		start_time: Date,
+		end_time: Date,
+	}
+
 }, {
 	toObject: { getters: true, setters: true },
 	toJSON: { getters: true, setters: true }

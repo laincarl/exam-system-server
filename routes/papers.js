@@ -27,21 +27,21 @@ function getRandomFromArr(arr, num) {
 
 //取所有试卷
 router.get("/", passport.authenticate("bearer", { session: false }), (req, res) => {
-	Paper.find({}, ["-_id", "-__v", "-parts._id"]).populate({
-		path: "parts.questions",
-		select: "id title selects"
-	}).exec((err, story) => {
-		if (err) console.log(err);
-		res.json(story);
-		// console.log(story.questions);
+	// Paper.find({}, ["-_id", "-__v", "-parts._id"]).populate({
+	// 	path: "parts.questions",
+	// 	select: "id title selects"
+	// }).exec((err, story) => {
+	// 	if (err) console.log(err);
+	// 	res.json(story);
+	// 	// console.log(story.questions);
+	// });
+	Paper.find({}, ["-_id","-__v", "-parts"], (err, data) => {
+		if (err) {
+			console.log("err");
+		} else {
+			res.json(data);
+		}
 	});
-	// Paper.find({}, ['-_id', '-questions._id'], (err, data) => {
-	//   if (err) {
-	//     console.log("err");
-	//   } else {
-	//     res.json(data);
-	//   }
-	// })
 });
 //取单个试卷
 router.get("/paper", passport.authenticate("bearer", { session: false }), (req, res) => {
@@ -49,10 +49,10 @@ router.get("/paper", passport.authenticate("bearer", { session: false }), (req, 
 	Paper.findOne({ id: req.query.id }).populate({
 		path: "parts.questions",
 		select: "id title selects answers"
-	}).exec((err, exam) => {
+	}).exec((err, paper) => {
 		if (err) console.log(err);
-		if (exam) {
-			res.json(exam);
+		if (paper) {
+			res.json(paper);
 		} else {
 			res.status(404);
 			res.json({ message: "试卷不存在" });

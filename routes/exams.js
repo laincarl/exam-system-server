@@ -6,6 +6,7 @@ const Result = require("../models/result");
 // const jwt = require("jsonwebtoken");
 // const config = require("../config");
 const passport = require("passport");
+const moment = require("moment");
 const router = express.Router();
 
 require("../passport")(passport);
@@ -32,20 +33,26 @@ router.get("/exam", passport.authenticate("bearer", { session: false }), (req, r
 		if (err) {
 			console.log("err");
 		} else {
-			const { paper_id } = data;
-			Paper.findOne({ id: paper_id }).populate({
-				path: "parts.questions",
-				select: "id title selects"
-			}).exec((err, paper) => {
-				if (err) console.log(err);
-				if (paper) {
-					res.json({ ...data._doc, ...paper._doc, ...{ id: data._doc.id } });
-				} else {
-					res.status(404);
-					res.json({ message: "试卷不存在" });
-				}
-				// console.log(story.questions);
-			});
+			const { paper_id, range } = data;
+			if (moment(range.start_time).isBefore(new Date())
+				&& moment(range.end_time).isAfter(new Date())) {
+				Paper.findOne({ id: paper_id }).populate({
+					path: "parts.questions",
+					select: "id title selects"
+				}).exec((err, paper) => {
+					if (err) console.log(err);
+					if (paper) {
+						res.json({ ...data._doc, ...paper._doc, ...{ id: data._doc.id } });
+					} else {
+						res.status(404);
+						res.json({ message: "试卷不存在" });
+					}
+					// console.log(story.questions);
+				});
+			} else {
+				res.status(404);
+				res.json({ message: "考试不在开启范围" });
+			}
 		}
 	});
 });

@@ -57,6 +57,23 @@ router.get("/exam", passport.authenticate("bearer", { session: false }), (req, r
 	});
 });
 //取单个考试结果
+router.get("/results", passport.authenticate("bearer", { session: false }), (req, res) => {
+	// console.log(res.query)
+	const { _id } = req.user;
+	Result.find({ user: _id }, ["-_id", "-__v"]).populate({
+		path: "user",
+		select: "name -_id"
+	}).exec((err, data) => {
+		if (err) console.log(err);
+		if (data) {
+			res.json(data);
+		} else {
+			res.status(404);
+			res.json({ message: "考试结果不存在" });
+		}
+	});
+});
+//取单个考试结果
 router.get("/result", passport.authenticate("bearer", { session: false }), (req, res) => {
 	// console.log(res.query)
 	const { _id } = req.user;
@@ -89,7 +106,7 @@ router.post("/submit", passport.authenticate("bearer", { session: false }), (req
 			console.log("err");
 			res.json({ message: "考试不存在" });
 		} else {
-			const { paper_id, title } = data;
+			const { paper_id, title,range,limit_time } = data;
 			Paper.findOne({ id: paper_id }).populate({
 				path: "parts.questions",
 				select: "id title selects answers"
@@ -114,6 +131,8 @@ router.post("/submit", passport.authenticate("bearer", { session: false }), (req
 					});
 
 					const newResult = new Result({
+						range,
+						limit_time,
 						exam_id: id,
 						exam_title: title,
 						paper_id,

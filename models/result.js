@@ -12,6 +12,18 @@ var Sequence = require("./sequence");
 const ResultSchema = new Schema({
 	id: { type: Number, index: { unique: true } },
 	user: { type: Schema.Types.ObjectId, ref: "User" },
+	create_time: {
+		type: Date,
+		default: Date.now,
+	},
+	range: {
+		start_time: Date,
+		end_time: Date,
+	},
+	limit_time: {
+		type: Number,
+		required: true
+	},
 	exam_id: { type: Number, required: true },
 	paper_id: { type: Number, required: true },
 	exam_title: { type: String, required: true },
@@ -36,7 +48,7 @@ const ResultSchema = new Schema({
 		},
 		questions: [
 			{
-				type: Schema.Types.Mixed,				
+				type: Schema.Types.Mixed,
 			}
 		]
 	}],

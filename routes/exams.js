@@ -14,9 +14,28 @@ require("../passport")(passport);
 
 //取所有考试
 router.get("/", passport.authenticate("bearer", { session: false }), (req, res) => {
-	Exam.find({}).exec((err, story) => {
+	//取考试的同时把当前用户的考试结果取出，标记是否参加过
+	const { _id } = req.user;
+	Exam.find({}).exec((err, exams) => {
 		if (err) console.log(err);
-		res.json(story);
+		//深拷贝
+		let examsModify = JSON.parse(JSON.stringify(exams));
+		Result.find({ user: _id }, (err, results) => {
+			if (err) console.log(err);
+			if (results) {
+				results.forEach((result) => {
+					examsModify.forEach(exam => {
+						if (exam.id === result.exam_id) {
+							exam.join = true;
+							console.log(exam.id);
+						}
+					});
+				});
+				res.json(examsModify);
+			} else {
+				res.json(examsModify);
+			}
+		});
 		// console.log(story.questions);
 	});
 	// Exam.find({}, ['-_id', '-questions._id'], (err, data) => {
@@ -29,34 +48,46 @@ router.get("/", passport.authenticate("bearer", { session: false }), (req, res) 
 });
 //取单个考试
 router.get("/exam", passport.authenticate("bearer", { session: false }), (req, res) => {
-	Exam.findOne({ id: req.query.id }, ["-_id", "-questions._id"], (err, data) => {
+	Result.findOne({ exam_id: req.query.id, user: req.user._id }, (err, data) => {
 		if (err) {
-			console.log("err");
+			console.log(err);
+		}
+		if (data) {
+			console.log(data);
+			res.send(403, "已参加过该考试");
 		} else {
-			const { paper_id, range } = data;
-			if (moment(range.start_time).isBefore(new Date())
-				&& moment(range.end_time).isAfter(new Date())) {
-				Paper.findOne({ id: paper_id }).populate({
-					path: "parts.questions",
-					select: "id title selects"
-				}).exec((err, paper) => {
-					if (err) console.log(err);
-					if (paper) {
-						res.json({ ...data._doc, ...paper._doc, ...{ id: data._doc.id } });
+			//不存在记录时再取考试
+			Exam.findOne({ id: req.query.id }, ["-_id", "-questions._id"], (err, data) => {
+				if (err) {
+					console.log("err");
+				} else {
+					const { paper_id, range } = data;
+					if (moment(range.start_time).isBefore(new Date())
+						&& moment(range.end_time).isAfter(new Date())) {
+						Paper.findOne({ id: paper_id }).populate({
+							path: "parts.questions",
+							select: "id title selects"
+						}).exec((err, paper) => {
+							if (err) console.log(err);
+							if (paper) {
+								res.json({ ...data._doc, ...paper._doc, ...{ id: data._doc.id } });
+							} else {
+								res.status(404);
+								res.json({ message: "试卷不存在" });
+							}
+							// console.log(story.questions);
+						});
 					} else {
 						res.status(404);
-						res.json({ message: "试卷不存在" });
+						res.json({ message: "考试不在开启范围" });
 					}
-					// console.log(story.questions);
-				});
-			} else {
-				res.status(404);
-				res.json({ message: "考试不在开启范围" });
-			}
+				}
+			});
 		}
 	});
+
 });
-//取单个考试结果
+//取所有考试结果
 router.get("/results", passport.authenticate("bearer", { session: false }), (req, res) => {
 	// console.log(res.query)
 	const { _id } = req.user;
@@ -106,7 +137,7 @@ router.post("/submit", passport.authenticate("bearer", { session: false }), (req
 			console.log("err");
 			res.json({ message: "考试不存在" });
 		} else {
-			const { paper_id, title,range,limit_time } = data;
+			const { paper_id, title, range, limit_time } = data;
 			Paper.findOne({ id: paper_id }).populate({
 				path: "parts.questions",
 				select: "id title selects answers"

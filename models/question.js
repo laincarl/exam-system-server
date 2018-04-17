@@ -4,6 +4,7 @@ const { Schema } = mongoose;
 const QuestionSchema = new Schema({
 	id: { type: Number, index: { unique: true } },
 	bank_id: { type: Number, required: true },
+	type: { type: String, required: true },
 	title: { type: String, required: true },
 	answers: [{ type: String}],
 	selects: { type: Schema.Types.Mixed, required: true },

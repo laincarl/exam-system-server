@@ -36,7 +36,7 @@ router.post("/new", passport.authenticate("bearer", { session: false }), (req, r
 			Question.insertMany(questions.map((one, i) => {
 				const temp = {
 					...one,
-					...{
+					...{						
 						id: id + i,
 						bank_id: one.bankId
 					}

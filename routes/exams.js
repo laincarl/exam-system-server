@@ -16,7 +16,7 @@ require("../passport")(passport);
 router.get("/", passport.authenticate("bearer", { session: false }), (req, res) => {
 	//取考试的同时把当前用户的考试结果取出，标记是否参加过
 	const { _id } = req.user;
-	Exam.find({}).exec((err, exams) => {
+	Exam.find({closed: false}).exec((err, exams) => {
 		if (err) console.log(err);
 		//深拷贝
 		let examsModify = JSON.parse(JSON.stringify(exams));
@@ -57,7 +57,7 @@ router.get("/exam", passport.authenticate("bearer", { session: false }), (req, r
 			res.send(403, "已参加过该考试");
 		} else {
 			//不存在记录时再取考试
-			Exam.findOne({ id: req.query.id }, ["-_id", "-questions._id"], (err, data) => {
+			Exam.findOne({ id: req.query.id, closed: false }, ["-_id", "-questions._id"], (err, data) => {
 				if (err) {
 					console.log("err");
 				} else {
@@ -86,6 +86,17 @@ router.get("/exam", passport.authenticate("bearer", { session: false }), (req, r
 		}
 	});
 
+});
+//关闭一个考试，伪删除
+router.delete("/exam", passport.authenticate("bearer", { session: false }), (req, res) => {
+	// console.log(req.query.id);
+	Exam.update({ id: req.query.id }, { $set: { closed: true } }, (err) => {
+		if (!err) {
+			res.send("关闭成功");
+		} else {
+			console.log(err);
+		}
+	});
 });
 //取所有考试结果
 router.get("/results", passport.authenticate("bearer", { session: false }), (req, res) => {

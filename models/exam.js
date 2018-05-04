@@ -44,8 +44,12 @@ const ExamSchema = new Schema({
 	range: {
 		start_time: Date,
 		end_time: Date,
+	},
+	closed: {
+		type: Boolean,
+		required: true,
+		default: false
 	}
-
 }, {
 	toObject: { getters: true, setters: true },
 	toJSON: { getters: true, setters: true }

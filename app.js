@@ -12,7 +12,16 @@ const bodyParser = require("body-parser");
 let port = process.env.PORT || 8000;
 
 const app = express();
-
+// 跨域设置
+app.all("*", function (req, res, next) {
+  res.header("Access-Control-Allow-Credentials", true)
+  res.header("Access-Control-Allow-Origin", "*")
+  res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept,Authorization")
+  res.header("Access-Control-Allow-Methods", "PUT,POST,GET,DELETE,OPTIONS")
+  res.header("X-Powered-By", " 3.2.1")
+  res.header("Content-Type", "application/json;charset=utf-8")
+  next();
+});
 app.use(logger("dev"));// 命令行中显示程序运行日志,便于bug调试
 app.use(cookieParser());
 app.use(express.static(path.join(__dirname, "public")));

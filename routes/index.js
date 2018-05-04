@@ -3,7 +3,7 @@ module.exports = (app) => {
 		res.json({ message: "hello index!"});
 	});
 
-	app.use("/user", require("./users")); // 在所有users路由前加/api
+	app.use("/user", require("./users")); // 在所有users路由前加
 	app.use("/questions", require("./questions")); 
 	app.use("/banks", require("./banks")); 
 	app.use("/exams", require("./exams")); 

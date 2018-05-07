@@ -61,6 +61,7 @@ router.get("/exam", passport.authenticate("bearer", { session: false }), (req, r
 				if (err) {
 					console.log("err");
 				} else {
+					console.log(data);
 					const { paper_id, range } = data;
 					if (moment(range.start_time).isBefore(new Date())
 						&& moment(range.end_time).isAfter(new Date())) {

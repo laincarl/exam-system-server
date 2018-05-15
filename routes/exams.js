@@ -10,13 +10,28 @@ const moment = require("moment");
 const router = express.Router();
 
 require("../passport")(passport);
-
-
+/**
+ * 
+ * 
+ * @param {any} type 试题种类
+ * @param {any} user_answer 用户答案数组
+ * @param {any} answer 正确答案数组
+ * @returns 
+ */
+function shouldGetScore(type, user_answer, answer) {
+	if (type === "select_single") {
+		return user_answer[0] === answer[0];
+	} else if (type === "select_multi") {
+		return user_answer.length === answer.length && user_answer.every(one => answer.includes(one));
+	} else if (type === "blank") {
+		return user_answer.length === answer.length && user_answer.every((one, i) => answer[i] === one);
+	}
+}
 //取所有考试
 router.get("/", passport.authenticate("bearer", { session: false }), (req, res) => {
 	//取考试的同时把当前用户的考试结果取出，标记是否参加过
 	const { _id } = req.user;
-	Exam.find({closed: false}).exec((err, exams) => {
+	Exam.find({ closed: false }).exec((err, exams) => {
 		if (err) console.log(err);
 		//深拷贝
 		let examsModify = JSON.parse(JSON.stringify(exams));
@@ -162,11 +177,11 @@ router.post("/submit", passport.authenticate("bearer", { session: false }), (req
 					let user_score = 0;
 					const { parts } = result;
 					parts.forEach(part => {
-						const { score, num, questions } = part;
+						const { type, score, num, questions } = part;
 						total_score += score * num;
 						questions.forEach(question => {
 							question["user_answer"] = answers[question.id];
-							if (question.answers[0] === answers[question.id]) {
+							if (shouldGetScore(type, answers[question.id], question.answers)) {
 								user_score += score;
 							}
 							// console.log(question);

@@ -2,6 +2,7 @@ const express = require("express");
 const Bank = require("../models/bank");
 const Question = require("../models/question");
 const passport = require("passport");
+const checkPermission = require("../middlewares/checkPermission");
 const router = express.Router();
 
 require("../passport")(passport);
@@ -10,8 +11,9 @@ async function getBank(req, res) {
 	const id = req.query.id;
 	try {
 		const data = await Bank.findOne({ id }, ["-_id", "-__v"]);
+		const questions = await Question.find({ bank_id: id });
 		const count = await Question.count({ bank_id: id });
-		res.json({ ...data._doc, ...{ count } });
+		res.json({ ...data._doc, ...{ count, questions } });
 	} catch (err) {
 		res.send(404, "不存在");
 		console.log(err);
@@ -30,7 +32,7 @@ router.get("/", (req, res) => {
 	});
 });
 //根据id取单个题库
-router.get("/bank", getBank);
+router.get("/bank", passport.authenticate("bearer", { session: false }), checkPermission(["admin", "teacher"]), getBank);
 // 添加新题库
 router.post("/new", passport.authenticate("bearer", { session: false }), (req, res) => {
 	if (!req.body) {

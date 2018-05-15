@@ -115,6 +115,57 @@ router.delete("/exam", passport.authenticate("bearer", { session: false }), (req
 	});
 });
 //取所有考试结果
+router.get("/manage/results", passport.authenticate("bearer", { session: false }), (req, res) => {
+	// console.log(res.query)
+	const page = parseInt(req.query.page);
+	const pageSize = 5;
+	Result.count({}, (err, count) => {
+		console.log(page, count);
+		Result.find({}, ["-_id", "-__v"])
+			.skip(page * pageSize)
+			.limit(5)
+			.sort({ "_id": -1 })
+			.populate({
+				path: "user",
+				select: "name -_id"
+			})
+			.exec((err, data) => {
+				if (err) console.log(err);
+				if (data) {
+					const total_page = Math.ceil(count / pageSize);
+					res.json({ count, total_page, current_page:page, results: data });
+				} else {
+					res.status(404);
+					res.json({ message: "考试结果不存在" });
+				}
+			});
+	});
+	// Result.find({}, ["-_id", "-__v"]).populate({
+	// 	path: "user",
+	// 	select: "name -_id"
+	// }).exec((err, data) => {
+	// 	if (err) console.log(err);
+	// 	if (data) {
+	// 		res.json(data);
+	// 	} else {
+	// 		res.status(404);
+	// 		res.json({ message: "考试结果不存在" });
+	// 	}
+	// });
+	// Result.find({}, ["-_id", "-__v"]).populate({
+	// 	path: "user",
+	// 	select: "name -_id"
+	// }).exec((err, data) => {
+	// 	if (err) console.log(err);
+	// 	if (data) {
+	// 		res.json(data);
+	// 	} else {
+	// 		res.status(404);
+	// 		res.json({ message: "考试结果不存在" });
+	// 	}
+	// });
+});
+//普通用户取所有考试结果
 router.get("/results", passport.authenticate("bearer", { session: false }), (req, res) => {
 	// console.log(res.query)
 	const { _id } = req.user;

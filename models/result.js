@@ -58,7 +58,7 @@ const ResultSchema = new Schema({
 ResultSchema.pre("save", function (next) {
 	var self = this;
 	if (self.isNew) {
-		Sequence.increment("Exam", function (err, result) {
+		Sequence.increment("Result", function (err, result) {
 			if (err)
 				throw err;
 			self.id = result.value.next;

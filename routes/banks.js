@@ -9,11 +9,16 @@ require("../passport")(passport);
 
 async function getBank(req, res) {
 	const id = req.query.id;
+	const page = parseInt(req.query.page);
+	const pageSize = 5;
 	try {
 		const data = await Bank.findOne({ id }, ["-_id", "-__v"]);
-		const questions = await Question.find({ bank_id: id });
+		const questions = await Question.find({ bank_id: id }).skip(page * pageSize)
+			.limit(5)
+			.sort({ "_id": -1 });
 		const count = await Question.count({ bank_id: id });
-		res.json({ ...data._doc, ...{ count, questions } });
+		const total_page = Math.ceil(count / pageSize);
+		res.json({ bank: { ...data._doc, ...{ count, total_page, current_page: page, } }, questions });
 	} catch (err) {
 		res.send(404, "不存在");
 		console.log(err);

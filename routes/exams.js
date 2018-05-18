@@ -20,11 +20,11 @@ require("../passport")(passport);
  */
 function shouldGetScore(type, user_answer, answer) {
 	if (type === "select_single") {
-		return user_answer[0] === answer[0];
+		return user_answer && user_answer[0] === answer[0];
 	} else if (type === "select_multi") {
-		return user_answer.length === answer.length && user_answer.every(one => answer.includes(one));
+		return user_answer && user_answer.length === answer.length && user_answer.every(one => answer.includes(one));
 	} else if (type === "blank") {
-		return user_answer.length === answer.length && user_answer.every((one, i) => answer[i] === one);
+		return user_answer && user_answer.length === answer.length && user_answer.every((one, i) => answer[i] === one);
 	}
 }
 //取所有考试
@@ -133,7 +133,7 @@ router.get("/manage/results", passport.authenticate("bearer", { session: false }
 				if (err) console.log(err);
 				if (data) {
 					const total_page = Math.ceil(count / pageSize);
-					res.json({ count, total_page, current_page:page, results: data });
+					res.json({ count, total_page, current_page: page, results: data });
 				} else {
 					res.status(404);
 					res.json({ message: "考试结果不存在" });

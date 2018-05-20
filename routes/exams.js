@@ -28,7 +28,7 @@ function shouldGetScore(type, user_answer, answer) {
 	}
 }
 //取所有考试
-router.get("/", passport.authenticate("bearer", { session: false }), (req, res) => {
+router.get("/", passport(), (req, res) => {
 	//取考试的同时把当前用户的考试结果取出，标记是否参加过
 	const { _id } = req.user;
 	Exam.find({ closed: false }).exec((err, exams) => {
@@ -62,7 +62,7 @@ router.get("/", passport.authenticate("bearer", { session: false }), (req, res) 
 	// })
 });
 //取单个考试
-router.get("/exam", passport.authenticate("bearer", { session: false }), (req, res) => {
+router.get("/exam", passport(), (req, res) => {
 	Result.findOne({ exam_id: req.query.id, user: req.user._id }, (err, data) => {
 		if (err) {
 			console.log(err);
@@ -106,7 +106,7 @@ router.get("/exam", passport.authenticate("bearer", { session: false }), (req, r
 
 });
 //关闭一个考试，伪删除
-router.delete("/exam", passport.authenticate("bearer", { session: false }), (req, res) => {
+router.delete("/exam", passport(), (req, res) => {
 	// console.log(req.query.id);
 	Exam.update({ id: req.query.id }, { $set: { closed: true } }, (err) => {
 		if (!err) {
@@ -117,7 +117,7 @@ router.delete("/exam", passport.authenticate("bearer", { session: false }), (req
 	});
 });
 //取所有考试结果
-router.get("/manage/results", passport.authenticate("bearer", { session: false }), (req, res) => {
+router.get("/manage/results", passport(), (req, res) => {
 	// console.log(res.query)
 	const page = parseInt(req.query.page);
 	const pageSize = 5;
@@ -144,7 +144,7 @@ router.get("/manage/results", passport.authenticate("bearer", { session: false }
 	});
 });
 //普通用户取所有考试结果
-router.get("/results", passport.authenticate("bearer", { session: false }), (req, res) => {
+router.get("/results", passport(), (req, res) => {
 	// console.log(res.query)
 	const { _id } = req.user;
 	Result.find({ user: _id }, ["-_id", "-__v"]).populate({
@@ -161,7 +161,7 @@ router.get("/results", passport.authenticate("bearer", { session: false }), (req
 	});
 });
 //取单个考试结果
-router.get("/result", passport.authenticate("bearer", { session: false }), (req, res) => {
+router.get("/result", passport(), (req, res) => {
 	// console.log(res.query)
 	const { _id } = req.user;
 	Result.findOne({ exam_id: req.query.id, user: _id }, ["-_id", "-__v"]).populate({
@@ -178,7 +178,7 @@ router.get("/result", passport.authenticate("bearer", { session: false }), (req,
 	});
 });
 //提交考试结果
-router.post("/submit", passport.authenticate("bearer", { session: false }), (req, res) => {
+router.post("/submit", passport(), (req, res) => {
 	// console.log(req.body);
 	//前端传回来题号组成的数组
 	const { id, answers } = req.body;
@@ -308,7 +308,7 @@ router.post("/submit", passport.authenticate("bearer", { session: false }), (req
 	// });
 });
 // 建立新的考试
-router.post("/new", passport.authenticate("bearer", { session: false }), (req, res) => {
+router.post("/new", passport(), (req, res) => {
 	if (!req.body) {
 		console.log(req.body);
 		res.json({ success: false, message: "请输入您的账号密码." });

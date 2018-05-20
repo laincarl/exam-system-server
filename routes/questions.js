@@ -20,7 +20,7 @@ router.get("/", (req, res) => {
 	});
 });
 // 批量插入新的试题
-router.post("/new", passport.authenticate("bearer", { session: false }), (req, res) => {
+router.post("/new", passport(), (req, res) => {
 	if (!req.body) {
 		console.log(req.body);
 		res.json({ success: false, message: "请输入您的账号密码." });

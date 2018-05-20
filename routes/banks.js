@@ -2,7 +2,7 @@ import  express  from "express";
 import  Bank  from "../models/bank";
 import  Question  from "../models/question";
 import  passport  from "../passport";
-import  checkPermission  from "../middlewares/checkPermission";
+// import  checkPermission  from "../middlewares/checkPermission";
 const router = express.Router();
 
 // require("../passport")(passport);
@@ -37,9 +37,9 @@ router.get("/", (req, res) => {
 	});
 });
 //根据id取单个题库
-router.get("/bank", passport.authenticate("bearer", { session: false }), checkPermission(["admin", "teacher"]), getBank);
+router.get("/bank", passport(["admin", "teacher"]), getBank);
 // 添加新题库
-router.post("/new", passport.authenticate("bearer", { session: false }), (req, res) => {
+router.post("/new", passport(), (req, res) => {
 	if (!req.body) {
 		console.log(req.body);
 		res.json({ success: false, message: "请输入您的账号密码." });

@@ -28,7 +28,7 @@ const router = express.Router();
 // 	return Math.ceil(Math.random() * (max - min) + min);
 // }
 //取所有试卷
-router.get("/", passport.authenticate("bearer", { session: false }), (req, res) => {
+router.get("/", passport(), (req, res) => {
 	// Paper.find({}, ["-_id", "-__v", "-parts._id"]).populate({
 	// 	path: "parts.questions",
 	// 	select: "id title selects"
@@ -46,7 +46,7 @@ router.get("/", passport.authenticate("bearer", { session: false }), (req, res) 
 	});
 });
 //取单个试卷
-router.get("/paper", passport.authenticate("bearer", { session: false }), (req, res) => {
+router.get("/paper", passport(), (req, res) => {
 	// console.log(res.query)
 	Paper.findOne({ id: req.query.id }, ).exec((err, paper) => {
 		if (err) console.log(err);
@@ -67,7 +67,7 @@ router.get("/paper", passport.authenticate("bearer", { session: false }), (req, 
 	// })
 });
 //取单个试卷结果
-router.get("/result", passport.authenticate("bearer", { session: false }), (req, res) => {
+router.get("/result", passport(), (req, res) => {
 	// console.log(res.query)
 	const { _id } = req.user;
 	Result.findOne({ exam_id: req.query.id, user: _id }, ["-_id", "-__v"]).populate({
@@ -83,7 +83,7 @@ router.get("/result", passport.authenticate("bearer", { session: false }), (req,
 		}
 	});
 });
-router.post("/submit", passport.authenticate("bearer", { session: false }), (req, res) => {
+router.post("/submit", passport(), (req, res) => {
 	// console.log(req.body);
 	//前端传回来题号组成的数组
 	const { id, title, questions } = req.body;
@@ -131,7 +131,7 @@ router.post("/submit", passport.authenticate("bearer", { session: false }), (req
 	});
 });
 // 建立新的试卷
-router.post("/new", passport.authenticate("bearer", { session: false }), (req, res) => {
+router.post("/new", passport(), (req, res) => {
 	if (!req.body) {
 		console.log(req.body);
 		res.json({ success: false, message: "请输入您的账号密码." });

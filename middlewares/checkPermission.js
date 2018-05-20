@@ -1,4 +1,4 @@
-module.exports = function checkPermission(role) {
+export default function checkPermission(role) {
 	let roles = role instanceof Array ? role : [role];
 	if (roles.includes("student")) {
 		roles = ["student", "teacher", "admin"];
@@ -14,4 +14,4 @@ module.exports = function checkPermission(role) {
 			res.send(403);
 		}
 	};
-};
+}

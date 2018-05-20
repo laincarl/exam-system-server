@@ -9,22 +9,24 @@ const router = express.Router();
 
 require("../passport")(passport);
 
-function getRandomFromArr(arr, num) {
-	let len = arr.length;
-	if (len <= num) {
-		return arr;
-	} else {
-		let result = [];
-		for (let i = 0; i < num; i++) {
-			let index = ~~(Math.random() * len) + i;
-			result[i] = arr[index];
-			arr[index] = arr[i];
-			len--;
-		}
-		return result;
-	}
-}
-
+// function getRandomFromArr(arr, num) {
+// 	let len = arr.length;
+// 	if (len <= num) {
+// 		return arr;
+// 	} else {
+// 		let result = [];
+// 		for (let i = 0; i < num; i++) {
+// 			let index = ~~(Math.random() * len) + i;
+// 			result[i] = arr[index];
+// 			arr[index] = arr[i];
+// 			len--;
+// 		}
+// 		return result;
+// 	}
+// }
+// function getRandomArbitrary(min, max) {
+// 	return Math.ceil(Math.random() * (max - min) + min);
+// }
 //取所有试卷
 router.get("/", passport.authenticate("bearer", { session: false }), (req, res) => {
 	// Paper.find({}, ["-_id", "-__v", "-parts._id"]).populate({
@@ -35,7 +37,7 @@ router.get("/", passport.authenticate("bearer", { session: false }), (req, res) 
 	// 	res.json(story);
 	// 	// console.log(story.questions);
 	// });
-	Paper.find({}, ["-_id","-__v", "-parts"], (err, data) => {
+	Paper.find({}, ["-_id", "-__v", "-parts"], (err, data) => {
 		if (err) {
 			console.log("err");
 		} else {
@@ -46,10 +48,7 @@ router.get("/", passport.authenticate("bearer", { session: false }), (req, res) 
 //取单个试卷
 router.get("/paper", passport.authenticate("bearer", { session: false }), (req, res) => {
 	// console.log(res.query)
-	Paper.findOne({ id: req.query.id }).populate({
-		path: "parts.questions",
-		select: "id title selects answers"
-	}).exec((err, paper) => {
+	Paper.findOne({ id: req.query.id }, ).exec((err, paper) => {
 		if (err) console.log(err);
 		if (paper) {
 			res.json(paper);
@@ -143,15 +142,35 @@ router.post("/new", passport.authenticate("bearer", { session: false }), (req, r
 				const { bank_id, num } = part;
 				// console.log(bank_id, num);
 				return new Promise((resolve) => {
-					Question.find({ bank_id }, ["_id", "id"], (err, data) => {
-						if (err) {
-							console.log("err");
-						} else {
-							part.questions = getRandomFromArr(data, num);
-							// console.log(part.questions);
-							resolve();
+					Question.aggregate([{
+						$match : {
+							bank_id
 						}
+					},{
+						$sample: {
+							size: num
+						}
+					}]).exec(function (err, result) {
+						part.questions = result;
+						// console.log(part.questions);
+						resolve();
+						// console.log(result);  // 10 random users 
 					});
+		
+				// Question.find({ bank_id }, ["_id", "id"], (err, data) => {
+				// 	if (err) {
+				// 		console.log("err");
+				// 	} else {
+				// 		// 从题库中取随机问题，然后存到试卷中，拷贝
+				// 		const ran=getRandomFromArr(data, num);
+				// 		Question.find({ _id: { $in: ran } }, (err, data) => {
+				// 			console.log();
+				// 			part.questions = data._doc;
+				// 			// console.log(part.questions);
+				// 			resolve();
+				// 		});							
+				// 	}
+				// });
 				});
 			})
 		).then(() => {
@@ -166,7 +185,6 @@ router.post("/new", passport.authenticate("bearer", { session: false }), (req, r
 				}
 				res.json({ success: true, message: "创建成功!" });
 			});
-
 		});
 
 

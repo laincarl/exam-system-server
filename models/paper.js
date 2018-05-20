@@ -52,8 +52,7 @@ const PaperSchema = new Schema({
 		},
 		questions: [
 			{
-				type: Schema.Types.ObjectId,
-				ref: "Question",
+				type: Schema.Types.Mixed,
 			}
 		]
 	}],

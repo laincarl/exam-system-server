@@ -192,59 +192,61 @@ router.post("/submit", passport.authenticate("bearer", { session: false }), (req
 			res.json({ message: "考试不存在" });
 		} else {
 			const { paper_id, title, range, limit_time } = data;
-			Paper.findOne({ id: paper_id }).populate({
-				path: "parts.questions",
-				select: "id title selects answers"
-			}).exec((err, paper) => {
-				if (err) console.log(err);
-				if (paper) {
+			Paper.findOne({ id: paper_id })
+			// .populate({
+			// 	path: "parts.questions",
+			// 	select: "id title selects answers"
+			// })
+				.exec((err, paper) => {
+					if (err) console.log(err);
+					if (paper) {
 					//深拷贝，之后对值进行修改
-					const result = JSON.parse(JSON.stringify(paper._doc));
-					let total_score = 0;
-					let user_score = 0;
-					const { parts } = result;
-					parts.forEach(part => {
-						const { type, score, num, questions } = part;
-						total_score += score * num;
-						questions.forEach(question => {
-							question["user_answer"] = answers[question.id];
-							if (shouldGetScore(type, answers[question.id], question.answers)) {
-								user_score += score;
-							}
+						const result = JSON.parse(JSON.stringify(paper._doc));
+						let total_score = 0;
+						let user_score = 0;
+						const { parts } = result;
+						parts.forEach(part => {
+							const { type, score, num, questions } = part;
+							total_score += score * num;
+							questions.forEach(question => {
+								question["user_answer"] = answers[question.id];
+								if (shouldGetScore(type, answers[question.id], question.answers)) {
+									user_score += score;
+								}
 							// console.log(question);
+							});
 						});
-					});
 
-					const newResult = new Result({
-						range,
-						limit_time,
-						exam_id: id,
-						exam_title: title,
-						paper_id,
-						user: _id,
-						total_score,
-						user_score,
-						parts
-					});
-					newResult.save((err) => {
-						if (err) {
-							console.log(err);
-							throw err;
-						}
-						res.json({
+						const newResult = new Result({
+							range,
+							limit_time,
 							exam_id: id,
 							exam_title: title,
 							paper_id,
 							user: _id,
 							total_score,
+							user_score,
 							parts
 						});
-					});
-				} else {
-					res.status(404);
-					res.json({ message: "试卷不存在" });
-				}
-			});
+						newResult.save((err) => {
+							if (err) {
+								console.log(err);
+								throw err;
+							}
+							res.json({
+								exam_id: id,
+								exam_title: title,
+								paper_id,
+								user: _id,
+								total_score,
+								parts
+							});
+						});
+					} else {
+						res.status(404);
+						res.json({ message: "试卷不存在" });
+					}
+				});
 		}
 	});
 

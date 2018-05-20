@@ -4,11 +4,13 @@ import passport from "../passport";
 // import checkPermission from "../middlewares/checkPermission";
 const router = express.Router();
 
-const { adduser, deluser, edituser, signup, head, info, alluser } = User;
+const { getUserById, adduser, deluser, edituser, signup, head, info, alluser } = User;
+
+router.get("/", passport("admin"), getUserById);
 // 管理员添加账户
 router.post("/adduser", passport("admin"), adduser);
-router.delete("/deluser", passport("admin"),deluser);
-router.put("/edituser", passport("admin"),edituser);
+router.delete("/deluser", passport("admin"), deluser);
+router.put("/edituser", passport("admin"), edituser);
 // 注册账户
 router.post("/signup", signup);
 // 检查用户名与密码并生成一个accesstoken如果验证通过
@@ -19,20 +21,8 @@ router.post("/head", passport(), head);
 // 通过 header 发送 Authorization -> Bearer  + token
 // 或者通过 ?access_token = token
 router.get("/info", passport(), info);
-router.get("/alluser", passport("admin"),alluser);
-// router.get("/",
-// 	passport.authenticate("bearer", { session: false }),
-// 	checkPermission("admin"),
-// 	function (req, res) {
-// 		const id = req.query.id;
-// 		UserModel.findOne({ id }, ["id", "name", "real_name", "role", "-_id"], (err, data) => {
-// 			if (err) {
-// 				console.log("err");
-// 			} else {
-// 				res.json(data);
-// 			}
-// 		});
-// 	});
+router.get("/alluser", passport("admin"), alluser);
+
 
 
 // router.get("/download", function (req, res) {

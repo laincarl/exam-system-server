@@ -2,7 +2,7 @@
  * @Author: LainCarl 
  * @Date: 2018-05-20 17:03:02 
  * @Last Modified by: LainCarl
- * @Last Modified time: 2018-05-20 17:52:54
+ * @Last Modified time: 2018-05-20 20:07:10
  * @Feature: User的controller
  */
 import fs from "fs";
@@ -21,6 +21,7 @@ const upload = multer({ dest: "temp/" }).any();
  */
 class User {
 	constructor() {
+		this.getUserById = this.getUserById.bind(this);
 		this.accesstoken = this.accesstoken.bind(this);
 		this.adduser = this.adduser.bind(this);
 		this.deluser = this.deluser.bind(this);
@@ -31,13 +32,30 @@ class User {
 		this.alluser = this.alluser.bind(this);
 	}
 	/**
+	 * 管理员通过id获取用户
+	 * 
+	 * @param {any} req 
+	 * @param {any} res 
+	 * @memberof User
+	 */
+	async getUserById(req, res) {
+		const id = req.query.id;
+		UserModel.findOne({ id }, ["id", "name", "real_name", "role", "-_id"], (err, data) => {
+			if (err) {
+				console.log("err");
+			} else {
+				res.json(data);
+			}
+		});
+	}
+	/**
   * 
   * 获取所有用户
   * @param {any} req 
   * @param {any} res 
   * @memberof User
   */
-	async alluser (req, res) {
+	async alluser(req, res) {
 		UserModel.find({}, ["id", "name", "real_name", "role", "-_id"], (err, data) => {
 			if (err) {
 				console.log("err");
@@ -54,7 +72,7 @@ class User {
   * @param {any} res 
   * @memberof User
   */
-	async info (req, res) {
+	async info(req, res) {
 		const { name, real_name, url, role } = req.user;
 		res.json({ name, real_name, role, url: `${config.server}${url}` });
 	}
@@ -65,7 +83,7 @@ class User {
   * @param {any} res 
   * @memberof User
   */
-	async signup (req, res)  {
+	async signup(req, res) {
 		if (!req.body.name || !req.body.password || !req.body.real_name) {
 			console.log(req.body.name);
 			res.json({ success: false, message: "请输入您的账号密码." });
@@ -93,7 +111,7 @@ class User {
   * @param {any} res 
   * @memberof User
   */
-	async deluser (req, res) {
+	async deluser(req, res) {
 		const id = req.query.id;
 		if (!id) {
 			res.json({ success: false, message: "id为空" });
@@ -114,7 +132,7 @@ class User {
   * @param {any} res 
   * @memberof User
   */
-	async adduser (req, res) {
+	async adduser(req, res) {
 		const { name, real_name, role, password } = req.body;
 		if (!name || !real_name || !role || !password) {
 			console.log(req.body.name);
@@ -142,7 +160,7 @@ class User {
   * @param {any} res 
   * @memberof User
   */
-	async edituser (req, res)  {
+	async edituser(req, res) {
 		const { id, name, real_name, role, initPassword } = req.body;
 		if (!id || !name || !real_name || !role) {
 			console.log(req.body.name);
@@ -212,8 +230,8 @@ class User {
   * @param {any} res 
   * @memberof User
   */
-	async head (req, res)  {
-		console.log("---------上传-------------");  
+	async head(req, res) {
+		console.log("---------上传-------------");
 		/** When using the "single"
         data come in "req.file" regardless of the attribute "name". **/
 		upload(req, res, function (err) {
@@ -229,7 +247,7 @@ class User {
           stored in the variable "originalname". **/
 			const target_name = `${req.file.filename}${req.file.originalname.match(/\.[^]*?$/)}`;
 			var target_path = `uploads/${target_name}`;
-  
+
 			/** A better way to copy the uploaded file. **/
 			console.log(target_path);
 			try {
@@ -258,7 +276,7 @@ class User {
 								});
 							}
 						});
-  
+
 					}
 				});
 			} catch (error) {

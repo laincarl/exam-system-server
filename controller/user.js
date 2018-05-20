@@ -2,7 +2,7 @@
  * @Author: LainCarl 
  * @Date: 2018-05-20 17:03:02 
  * @Last Modified by: LainCarl
- * @Last Modified time: 2018-05-20 17:21:23
+ * @Last Modified time: 2018-05-20 17:52:54
  * @Feature: User的controller
  */
 import fs from "fs";
@@ -14,6 +14,11 @@ import bcrypt from "bcrypt";
 //只能以Form形式上传name为mFile的文件
 //var upload = multer({ dest: 'upload/'}).single('mFile');
 const upload = multer({ dest: "temp/" }).any();
+/**
+ * 用户类
+ * 
+ * @class User
+ */
 class User {
 	constructor() {
 		this.accesstoken = this.accesstoken.bind(this);
@@ -25,6 +30,13 @@ class User {
 		this.info = this.info.bind(this);
 		this.alluser = this.alluser.bind(this);
 	}
+	/**
+  * 
+  * 获取所有用户
+  * @param {any} req 
+  * @param {any} res 
+  * @memberof User
+  */
 	async alluser (req, res) {
 		UserModel.find({}, ["id", "name", "real_name", "role", "-_id"], (err, data) => {
 			if (err) {
@@ -35,10 +47,24 @@ class User {
 			}
 		});
 	}
+	/**
+  * 
+  * 获取个人信息，包括用户名，真实姓名，身份，头像
+  * @param {any} req 
+  * @param {any} res 
+  * @memberof User
+  */
 	async info (req, res) {
 		const { name, real_name, url, role } = req.user;
 		res.json({ name, real_name, role, url: `${config.server}${url}` });
 	}
+	/**
+  * 
+  * 注册接口
+  * @param {any} req 
+  * @param {any} res 
+  * @memberof User
+  */
 	async signup (req, res)  {
 		if (!req.body.name || !req.body.password || !req.body.real_name) {
 			console.log(req.body.name);
@@ -60,6 +86,13 @@ class User {
 			});
 		}
 	}
+	/**
+  * 
+  * 删除一个用户
+  * @param {any} req 
+  * @param {any} res 
+  * @memberof User
+  */
 	async deluser (req, res) {
 		const id = req.query.id;
 		if (!id) {
@@ -74,6 +107,13 @@ class User {
 			});
 		}
 	}
+	/**
+  * 
+  * 增加一个用户
+  * @param {any} req 
+  * @param {any} res 
+  * @memberof User
+  */
 	async adduser (req, res) {
 		const { name, real_name, role, password } = req.body;
 		if (!name || !real_name || !role || !password) {
@@ -95,6 +135,13 @@ class User {
 			});
 		}
 	}
+	/**
+  * 
+  * 编辑用户
+  * @param {any} req 
+  * @param {any} res 
+  * @memberof User
+  */
 	async edituser (req, res)  {
 		const { id, name, real_name, role, initPassword } = req.body;
 		if (!id || !name || !real_name || !role) {
@@ -112,6 +159,13 @@ class User {
 			});
 		}
 	}
+	/**
+  * 
+  * 获取token，登录
+  * @param {any} req 
+  * @param {any} res 
+  * @memberof User
+  */
 	async accesstoken(req, res) {
 		UserModel.findOne({
 			name: req.body.name
@@ -151,9 +205,15 @@ class User {
 			}
 		});
 	}
+	/**
+  * 
+  * 上传头像
+  * @param {any} req 
+  * @param {any} res 
+  * @memberof User
+  */
 	async head (req, res)  {
-		console.log("---------上传-------------");
-  
+		console.log("---------上传-------------");  
 		/** When using the "single"
         data come in "req.file" regardless of the attribute "name". **/
 		upload(req, res, function (err) {

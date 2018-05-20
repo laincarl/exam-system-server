@@ -1,6 +1,7 @@
-var mongoose = require("mongoose");
 
-var Schema = mongoose.Schema;
+import mongoose from "mongoose";
+
+const { Schema } = mongoose;
 /**
   * 存储ID的序列值
   */
@@ -20,4 +21,4 @@ SequenceSchema.statics.increment = function (schemaName, callback) {
 
 var Sequence = mongoose.model("Sequence", SequenceSchema);
 
-module.exports = Sequence;
+export default Sequence;

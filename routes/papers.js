@@ -1,13 +1,13 @@
-const express = require("express");
-const Paper = require("../models/paper");
-const Question = require("../models/question");
-const Result = require("../models/result");
-// const jwt = require("jsonwebtoken");
-// const config = require("../config");
-const passport = require("passport");
+import  express  from "express";
+import  Paper  from "../models/paper";
+import  Question  from "../models/question";
+import  Result  from "../models/result";
+// import  jwt  from "jsonwebtoken";
+// import  config  from "../config";
+import  passport  from "../passport";
 const router = express.Router();
 
-require("../passport")(passport);
+// require("../passport")(passport);
 
 // function getRandomFromArr(arr, num) {
 // 	let len = arr.length;
@@ -204,4 +204,4 @@ router.post("/new", passport.authenticate("bearer", { session: false }), (req, r
 });
 
 
-module.exports = router;
+export default router;

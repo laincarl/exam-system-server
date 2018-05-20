@@ -1,11 +1,11 @@
-const express = require("express");
-const Question = require("../models/question");
-// const jwt = require("jsonwebtoken");
-// const config = require("../config");
-const passport = require("passport");
+import  express  from "express";
+import  Question  from "../models/question";
+// import  jwt  from "jsonwebtoken";
+// import  config  from "../config";
+import  passport  from "../passport";
 const router = express.Router();
 
-require("../passport")(passport);
+// require("../passport")(passport);
 
 // babel-register
 //取所有试题
@@ -76,4 +76,4 @@ router.post("/new", passport.authenticate("bearer", { session: false }), (req, r
 });
 
 
-module.exports = router;
+export default router;

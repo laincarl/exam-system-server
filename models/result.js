@@ -6,9 +6,11 @@
  * @Feature: 存放考试结果  
  */
 
-const mongoose = require("mongoose");
+
+import mongoose from "mongoose";
+import Sequence from "./sequence";
+
 const { Schema } = mongoose;
-var Sequence = require("./sequence");
 const ResultSchema = new Schema({
 	id: { type: Number, index: { unique: true } },
 	user: { type: Schema.Types.ObjectId, ref: "User" },
@@ -69,4 +71,4 @@ ResultSchema.pre("save", function (next) {
 	}
 });
 
-module.exports = mongoose.model("Result", ResultSchema);
+export default mongoose.model("Result", ResultSchema);

@@ -1,11 +1,11 @@
-const express = require("express");
-const Bank = require("../models/bank");
-const Question = require("../models/question");
-const passport = require("passport");
-const checkPermission = require("../middlewares/checkPermission");
+import  express  from "express";
+import  Bank  from "../models/bank";
+import  Question  from "../models/question";
+import  passport  from "../passport";
+import  checkPermission  from "../middlewares/checkPermission";
 const router = express.Router();
 
-require("../passport")(passport);
+// require("../passport")(passport);
 
 async function getBank(req, res) {
 	const id = req.query.id;
@@ -60,4 +60,4 @@ router.post("/new", passport.authenticate("bearer", { session: false }), (req, r
 });
 
 
-module.exports = router;
+export default router;

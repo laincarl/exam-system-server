@@ -1,6 +1,6 @@
-const mongoose = require("mongoose");
+import mongoose from "mongoose";
 const { Schema } = mongoose;
-var Sequence = require("./sequence");
+import Sequence  from "./sequence";
 
 function dateFormat(fmt, date) { //author: meizz   
 	var o = {
@@ -73,4 +73,4 @@ ExamSchema.pre("save", function (next) {
 ExamSchema.virtual("createAt").get(function () {
 	return this.create_time;
 });
-module.exports = mongoose.model("Exam", ExamSchema);
+export default mongoose.model("Exam", ExamSchema);

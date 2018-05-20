@@ -1,15 +1,15 @@
-const express = require("express");
-const Exam = require("../models/exam");
-// const Question = require("../models/question");
-const Paper = require("../models/paper");
-const Result = require("../models/result");
-// const jwt = require("jsonwebtoken");
-// const config = require("../config");
-const passport = require("passport");
-const moment = require("moment");
+import  express  from "express";
+import  Exam  from "../models/exam";
+// import  Question  from "../models/question";
+import  Paper  from "../models/paper";
+import  Result  from "../models/result";
+// import  jwt  from "jsonwebtoken";
+// import  config  from "../config";
+import  passport  from "../passport";
+import  moment  from "moment";
 const router = express.Router();
 
-require("../passport")(passport);
+// require("../passport")(passport);
 /**
  * 
  * 
@@ -76,26 +76,28 @@ router.get("/exam", passport.authenticate("bearer", { session: false }), (req, r
 				if (err) {
 					console.log("err");
 				} else {
-					console.log(data);
-					const { paper_id, range } = data;
-					if (moment(range.start_time).isBefore(new Date())
-						&& moment(range.end_time).isAfter(new Date())) {
-						Paper.findOne({ id: paper_id }).populate({
-							path: "parts.questions",
-							select: "id title selects"
-						}).exec((err, paper) => {
-							if (err) console.log(err);
-							if (paper) {
-								res.json({ ...data._doc, ...paper._doc, ...{ id: data._doc.id } });
-							} else {
-								res.status(404);
-								res.json({ message: "试卷不存在" });
-							}
-							// console.log(story.questions);
-						});
+					if (data) {
+						// console.log(data);
+						const { paper_id, range } = data;
+						if (moment(range.start_time).isBefore(new Date())
+							&& moment(range.end_time).isAfter(new Date())) {
+							Paper.findOne({ id: paper_id }).populate({
+								path: "parts.questions",
+								select: "id title selects"
+							}).exec((err, paper) => {
+								if (err) console.log(err);
+								if (paper) {
+									res.json({ ...data._doc, ...paper._doc, ...{ id: data._doc.id } });
+								} else {
+									res.send(403, "试卷不存在");
+								}
+								// console.log(story.questions);
+							});
+						} else {
+							res.send(403, "考试不在开启范围");
+						}
 					} else {
-						res.status(404);
-						res.json({ message: "考试不在开启范围" });
+						res.send(403, "考试不存在");
 					}
 				}
 			});
@@ -193,14 +195,14 @@ router.post("/submit", passport.authenticate("bearer", { session: false }), (req
 		} else {
 			const { paper_id, title, range, limit_time } = data;
 			Paper.findOne({ id: paper_id })
-			// .populate({
-			// 	path: "parts.questions",
-			// 	select: "id title selects answers"
-			// })
+				// .populate({
+				// 	path: "parts.questions",
+				// 	select: "id title selects answers"
+				// })
 				.exec((err, paper) => {
 					if (err) console.log(err);
 					if (paper) {
-					//深拷贝，之后对值进行修改
+						//深拷贝，之后对值进行修改
 						const result = JSON.parse(JSON.stringify(paper._doc));
 						let total_score = 0;
 						let user_score = 0;
@@ -213,7 +215,7 @@ router.post("/submit", passport.authenticate("bearer", { session: false }), (req
 								if (shouldGetScore(type, answers[question.id], question.answers)) {
 									user_score += score;
 								}
-							// console.log(question);
+								// console.log(question);
 							});
 						});
 
@@ -336,4 +338,4 @@ router.post("/new", passport.authenticate("bearer", { session: false }), (req, r
 });
 
 
-module.exports = router;
+export default router;

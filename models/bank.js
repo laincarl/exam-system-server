@@ -6,9 +6,10 @@
  * @Feature: 一个题库 
  */
 
-const mongoose = require("mongoose");
+import mongoose from "mongoose";
+import Sequence from "./sequence";
+
 const { Schema } = mongoose;
-var Sequence = require("./sequence");
 
 const BankSchema = new Schema({
 	id: { type: Number, index: { unique: true } },
@@ -29,4 +30,4 @@ BankSchema.pre("save", function (next) {
 		next();
 	}
 });
-module.exports = mongoose.model("Bank", BankSchema);
+export default mongoose.model("Bank", BankSchema);

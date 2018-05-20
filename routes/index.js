@@ -1,13 +1,19 @@
-module.exports = (app) => {
+import users from "./users";
+import questions from "./questions";
+import banks from "./banks";
+import exams from "./exams";
+import papers from "./papers";
+
+export default (app) => {
 	app.get("/", (req, res) => {
-		res.json({ message: "hello index!"});
+		res.json({ message: "hello index!" });
 	});
 
-	app.use("/user", require("./users")); // 在所有users路由前加
-	app.use("/questions", require("./questions")); 
-	app.use("/banks", require("./banks")); 
-	app.use("/exams", require("./exams")); 
-	app.use("/papers", require("./papers")); 
+	app.use("/user", users); // 在所有users路由前加
+	app.use("/questions", questions);
+	app.use("/banks", banks);
+	app.use("/exams", exams);
+	app.use("/papers", papers);
 };
 
 

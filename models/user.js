@@ -1,7 +1,9 @@
-const mongoose = require("mongoose");
+
+import mongoose from "mongoose";
+import Sequence from "./sequence";
+
 const { Schema } = mongoose;
-var Sequence = require("./sequence");
-const bcrypt = require("bcrypt");
+import  bcrypt  from "bcrypt";
 const UserSchema = new Schema({
 	id: { type: Number, index: { unique: true } },
 	name: {
@@ -73,4 +75,4 @@ UserSchema.methods.comparePassword = function (passw, cb) {
 	});
 };
 
-module.exports = mongoose.model("User", UserSchema);
+export default mongoose.model("User", UserSchema);

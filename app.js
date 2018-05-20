@@ -1,14 +1,14 @@
-const express = require("express");
-const mongoose = require("mongoose");
-const path = require("path");
-const logger = require("morgan");
-const passport = require("passport");// 用户认证模块passport
-const io= require("socket.io");
-
-const routes = require("./routes"); //路由配置
-const config = require("./config"); //全局配置
-const cookieParser = require("cookie-parser");
-const bodyParser = require("body-parser");
+import express from "express";
+import mongoose from "mongoose";
+import path from "path";
+import logger from "morgan";
+import passport from "passport";// 用户认证模块passport
+import io from "socket.io";
+import routes from "./routes"; //路由配置
+import config from "./config"; //全局配置
+import cookieParser from "cookie-parser";
+import bodyParser from "body-parser";
+import http from "http";
 // const CamelCaseToUnderScoreCase=require("./middlewares/CamelCaseToUnderScoreCase");
 let port = process.env.PORT || 9000;
 
@@ -38,19 +38,19 @@ mongoose.connect(config.database); // 连接数据库
 
 
 // 创建一个Socket.IO实例，并把它传递给服务器
-var server = require("http").createServer(app);
-const socket= io.listen(server);
+var server = http.createServer(app);
+const socket = io.listen(server);
 
 // 添加一个连接监听器
-socket.on("connection", function(client) { 
+socket.on("connection", function (client) {
 
 	console.log("连接成功");
 	// 连接成功，开始监听
-	client.on("message",function(event){ 
-		console.log("Received message from client!",event);
+	client.on("message", function (event) {
+		console.log("Received message from client!", event);
 	});
 	// 连接失败
-	client.on("disconnect",function(){ 
+	client.on("disconnect", function () {
 		// clearInterval(interval);
 		console.log("Server has disconnected");
 	});

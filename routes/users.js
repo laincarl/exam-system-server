@@ -1,15 +1,15 @@
-const express = require("express");
-const fs = require("fs");
-const User = require("../models/user");
-const jwt = require("jsonwebtoken");
-const config = require("../config");
-const passport = require("passport");
-var multer = require("multer");
-const checkPermission = require("../middlewares/checkPermission");
-const bcrypt = require("bcrypt");
+import  express  from "express";
+import  fs  from "fs";
+import  User  from "../models/user";
+import  jwt  from "jsonwebtoken";
+import  config  from "../config";
+import  passport  from "../passport";
+import multer from "multer";
+import  checkPermission  from "../middlewares/checkPermission";
+import  bcrypt  from "bcrypt";
 const router = express.Router();
 
-require("../passport")(passport);
+// require("../passport")(passport);
 //只能以Form形式上传name为mFile的文件
 //var upload = multer({ dest: 'upload/'}).single('mFile');
 var upload = multer({ dest: "temp/" }).any();
@@ -263,4 +263,4 @@ router.get("/alluser",
 			}
 		});
 	});
-module.exports = router;
+export default router;

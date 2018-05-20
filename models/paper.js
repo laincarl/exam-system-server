@@ -1,6 +1,8 @@
-const mongoose = require("mongoose");
+
+import mongoose from "mongoose";
+import Sequence from "./sequence";
+
 const { Schema } = mongoose;
-var Sequence = require("./sequence");
 
 function dateFormat(fmt, date) { //author: meizz   
 	var o = {
@@ -79,4 +81,4 @@ PaperSchema.pre("save", function (next) {
 PaperSchema.virtual("createAt").get(function () {
 	return this.create_time;
 });
-module.exports = mongoose.model("Paper", PaperSchema);
+export default mongoose.model("Paper", PaperSchema);

@@ -27,14 +27,39 @@ class Bank {
   */
 	async getAllBank(req, res) {
 		const type = req.query.type;
-		BankModel.find(type ? { type } : {}, ["-_id", "-__v"], (err, data) => {
-			if (err) {
-				console.log("err");
+		// if (!type) {
+		// 	// console.log('缺少类型信息');
+		// 	res.send({
+		// 		status: 0,
+		// 		type: "NEED_TYPE",
+		// 		message: "缺少类型信息"
+		// 	});
+		// 	return;
+		// }
+		try {
+			const banks = await BankModel.find(type ? { type } : {}, ["-_id", "-__v"]);
+			if (!banks) {
+				throw new Error("未找到题库");
 			} else {
-				res.json(data);
-				// console.log(data);
+				res.send({
+					status: 1,
+					data: banks
+				});
 			}
-		});
+		} catch (err) {
+			console.log("未找到题库");
+			res.send({
+				status: 0,
+				type: "BANK_NOT_FOUND",
+				message: "未找到题库"
+			});
+		}
+
+		// try{
+		// 	throw new Error("用户名参数错误");
+		// }catch(err){
+		// 	next(err);
+		// }
 	}
 	/**
   * 通过id取题库
@@ -47,17 +72,40 @@ class Bank {
 		const id = req.query.id;
 		const page = parseInt(req.query.page);
 		const pageSize = 5;
+		if (!id || isNaN(page) || !pageSize) {
+			// console.log('缺少类型信息');
+			res.send({
+				status: 0,
+				type: "NEED_PARAMETERS",
+				message: "缺少参数"
+			});
+			return;
+		}
 		try {
-			const data = await BankModel.findOne({ id }, ["-_id", "-__v"]);
-			const questions = await QuestionModel.find({ bank_id: id }).skip(page * pageSize)
-				.limit(5)
-				.sort({ "_id": -1 });
-			const count = await QuestionModel.count({ bank_id: id });
+			const [bank, questions, count] = await Promise.all([
+				await BankModel.findOne({ id }, ["-_id", "-__v"]),
+				await QuestionModel.find({ bank_id: id }).skip(page * pageSize)
+					.limit(5)
+					.sort({ "_id": -1 }),
+				await QuestionModel.count({ bank_id: id })
+			]);
 			const total_page = Math.ceil(count / pageSize);
-			res.json({ bank: { ...data._doc, ...{ count, total_page, current_page: page, } }, questions });
+			if (!bank) {
+				throw new Error("未找到题库");
+			} else if (!questions || !count) {
+				throw new Error("未找到试题");
+			} else {
+				res.send({
+					status: 1,
+					data: { bank: { ...bank._doc, ...{ count, total_page, current_page: page, } }, questions }
+				});
+			}
 		} catch (err) {
-			res.send(404, "不存在");
-			console.log(err);
+			res.send({
+				status: 0,
+				type: "GET_ERROR",
+				message: err.message
+			});
 		}
 	}
 	/**
@@ -68,21 +116,30 @@ class Bank {
   * @memberof Bank
   */
 	async newBank(req, res) {
-		if (!req.body) {
-			console.log(req.body);
-			res.json({ success: false, message: "请输入您的账号密码." });
-		} else {
-			const { title, type } = req.body;
-			var newBank = new BankModel({
+		const { title, type } = req.body;
+		if (!title || !type) {
+			res.send({
+				status: 0,
+				type: "NEED_INFO",
+				message: "缺少信息"
+			});
+			return;
+		}
+		try {
+			const newBank = new BankModel({
 				type,
 				title,
 			});
-			newBank.save((err) => {
-				if (err) {
-					console.log(err);
-					throw err;
-				}
-				res.json({ success: true, message: "创建成功!" });
+			await newBank.save();
+			res.send({
+				status: 1,
+				data: "创建成功"
+			});
+		} catch (err) {
+			res.send({
+				status: 0,
+				type: "SAVE_ERROR",
+				message: "创建失败"
 			});
 		}
 	}

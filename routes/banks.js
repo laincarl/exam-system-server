@@ -13,10 +13,10 @@ const router = express.Router();
 const { getAllBank, getBank, newBank } = Bank;
 
 //取所有题库
-router.get("/", getAllBank);
+router.get("/",passport(["admin", "teacher"]), getAllBank);
 //根据id取单个题库
 router.get("/bank", passport(["admin", "teacher"]), getBank);
 // 添加新题库
-router.post("/new", passport(), newBank);
+router.post("/new", passport(["admin", "teacher"]), newBank);
 
 export default router;

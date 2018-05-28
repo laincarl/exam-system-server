@@ -19,7 +19,7 @@ router.get("/exam", passport(), getExam);
 //关闭一个考试，伪删除
 router.delete("/exam", passport(), deleteExam);
 //取所有考试结果
-router.get("/manage/results", passport(), getResultsAdmin);
+router.get("/manage/results", passport(["admin","teacher"]), getResultsAdmin);
 //普通用户取所有考试结果
 router.get("/results", passport(), getResults);
 //取单个考试结果
@@ -27,7 +27,7 @@ router.get("/result", passport(), getResult);
 //提交考试结果
 router.post("/submit", passport(), submit);
 // 建立新的考试
-router.post("/new", passport(), newExam);
+router.post("/new", passport(["admin","teacher"]), newExam);
 
 
 export default router;

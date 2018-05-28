@@ -39,14 +39,23 @@ class User {
 	 * @memberof User
 	 */
 	async getUserById(req, res) {
-		const id = req.query.id;
-		UserModel.findOne({ id }, ["id", "name", "real_name", "role", "-_id"], (err, data) => {
-			if (err) {
-				console.log("err");
-			} else {
-				res.json(data);
+		const { id } = req.query;
+		try {
+			const user = await UserModel.findOne({ id }, ["id", "name", "real_name", "role", "-_id"]);
+			if (!user) {
+				throw new Error("没有找到用户");
 			}
-		});
+			res.json({
+				status: 1,
+				data: user
+			});
+		} catch (err) {
+			res.json({
+				status: 0,
+				// type:'',
+				message: err.message
+			});
+		}
 	}
 	/**
   * 

@@ -30,9 +30,13 @@ app.use(express.static(path.join(__dirname, "public")));
 app.use(passport.initialize());// 初始化passport模块
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(bodyParser.json()); // 调用bodyParser模块以便程序正确解析body传入值
+
 // app.use(CamelCaseToUnderScoreCase());
 routes(app); // 路由引入
-
+app.use(function(err, req, res, next) {
+	console.error(err.stack);
+	res.status(500).send("Something broke!");
+});
 mongoose.Promise = global.Promise;
 mongoose.connect(config.database); // 连接数据库
 

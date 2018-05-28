@@ -1,3 +1,11 @@
+/*
+ * @Author: LainCarl 
+ * @Date: 2018-05-20 20:10:23 
+ * @Last Modified by: LainCarl
+ * @Last Modified time: 2018-05-20 20:10:45
+ * @Feature: 用户路由
+ */
+
 import express from "express";
 import User from "../controller/user";
 import passport from "../passport";

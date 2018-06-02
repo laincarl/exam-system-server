@@ -26,13 +26,24 @@ class Paper {
   * @memberof Paper
   */
 	async getAllPaper(req, res) {
-		PaperModel.find({}, ["-_id", "-__v", "-parts"], (err, data) => {
-			if (err) {
-				console.log("err");
+		try {
+			const papers = await PaperModel.find({}, ["-_id", "-__v", "-parts"]);
+			if (!papers) {
+				throw new Error("未找到试卷");
 			} else {
-				res.json(data);
+				res.send({
+					status: 1,
+					data: papers
+				});
 			}
-		});
+		} catch (err) {
+			console.log("未找到试卷");
+			res.send({
+				status: 0,
+				type: "PAPER_NOT_FOUND",
+				message: "未找到试卷"
+			});
+		}
 	}
 	/**
   * 获取单个试卷
@@ -42,24 +53,33 @@ class Paper {
   * @memberof Paper
   */
 	async getPaper(req, res) {
-		// console.log(res.query)
-		PaperModel.findOne({ id: req.query.id }, ).exec((err, paper) => {
-			if (err) console.log(err);
-			if (paper) {
-				res.json(paper);
-			} else {
-				res.status(404);
-				res.json({ message: "试卷不存在" });
+		const { id } = req.query;
+		if (!id) {
+			res.send({
+				status: 0,
+				type: "NEED_ID",
+				message: "需要ID"
+			});
+			return;
+		}
+		try {
+			const paper = await PaperModel.findOne({ id });
+			if (!paper) {
+				throw new Error("未找到试卷");
 			}
-			// console.log(story.questions);
-		});
-		// PaperModel.find({}, ['-_id', '-questions._id'], (err, data) => {
-		//   if (err) {
-		//     console.log("err");
-		//   } else {
-		//     res.json(data);
-		//   }
-		// })
+			res.send({
+				status: 1,
+				data: paper
+			});
+		} catch (err) {
+			console.log(err);
+			res.send({
+				status: 0,
+				type: "PAPER_NOT_FOUND",
+				message: err.message
+			});
+		}
+
 	}
 	/**
   * 新建一张试卷
@@ -69,47 +89,43 @@ class Paper {
   * @memberof Paper
   */
 	async newPaper(req, res) {
-		if (!req.body) {
-			console.log(req.body);
-			res.json({ success: false, message: "请输入您的账号密码." });
-		} else {
-			const { title, parts } = req.body;
-			Promise.all(
-				parts.map(part => {
-					const { bank_id, num } = part;
-					// console.log(bank_id, num);
-					return new Promise((resolve) => {
-						QuestionModel.aggregate([{
-							$match: {
-								bank_id
-							}
-						}, {
-							$sample: {
-								size: num
-							}
-						}]).exec(function (err, result) {
-							part.questions = result;
-							// console.log(part.questions);
-							resolve();
-							// console.log(result);  // 10 random users 
-						});
-					});
-				})
-			).then(() => {
-				var newPaper = new PaperModel({
-					title,
-					parts,
-				});
-				newPaper.save((err) => {
-					if (err) {
-						console.log(err);
-						throw err;
-					}
-					res.json({ success: true, message: "创建成功!" });
-				});
-			});
 
+		const { title, parts } = req.body;
+		if (!title || !parts) {
+			res.send({
+				status: 0,
+				type: "NEED_Info",
+				message: "缺少信息"
+			});
 		}
+		await Promise.all(
+			parts.map(async (part) => {
+				const { bank_id, num } = part;
+				// console.log(bank_id, num);
+				const questions = await QuestionModel.aggregate([{
+					$match: {
+						bank_id
+					}
+				}, {
+					$sample: {
+						size: num
+					}
+				}]);
+				part.questions = questions;
+			})
+		);
+		var newPaper = new PaperModel({
+			title,
+			parts,
+		});
+		newPaper.save((err) => {
+			if (err) {
+				console.log(err);
+				throw err;
+			}
+			res.json({ success: true, message: "创建成功!" });
+		});
+
 	}
 }
 export default new Paper();

@@ -23,38 +23,56 @@ class Question {
   * @memberof Question
   */
 	async importQuestion(req, res) {
-		if (!req.body) {
-			console.log(req.body);
-			res.json({ success: false, message: "请输入您的账号密码." });
-		} else {
-			const questions = req.body;
-			// console.log(questions);
+		const questions = req.body;
+		if (!questions) {
+			res.send({
+				status: 0,
+				type: "NEED_INFO",
+				message: "缺少信息"
+			});
+			return;
+		}
+		
+		try {
 			let id = 1;
-			QuestionModel.findOne().sort("-id").exec(function (err, item) {
-				// console.log(item.id);
-				if (item && item.id) {
-					id = item.id + 1;
-				}
-				QuestionModel.insertMany(questions.map((one, i) => {
-					const temp = {
-						...one,
-						...{
-							id: id + i,
-							bank_id: one.bankId
-						}
-					};
-					delete temp.bankId;
-					return temp;
-				}), function (err) {
-					if (err) {
-						console.log(err);
-						throw err;
+			// 找到id最大的项https://stackoverflow.com/questions/15033981/mongoose-get-max-id-from-table-before-inserting-new-row
+			const maxIdItem = await QuestionModel.findOne().sort("-id");
+			if (maxIdItem && maxIdItem.id) {
+				id = maxIdItem.id + 1;
+			}
+			// console.log(id);
+			await QuestionModel.insertMany(questions.map((one, i) => {
+				const temp = {
+					...one,
+					...{
+						id: id + i,				
 					}
-					res.json({ success: true, message: "导入成功!" });
-				});
-				// item.itemId is the max value
+				};			
+				return temp;
+			}));
+			// await QuestionModel.insertMany(questions);
+			res.send({
+				status: 1,
+				data: "导入成功"
+			});
+		} catch (err) {
+			res.send({
+				status: 0,
+				type: "INSERT_ERROR",
+				message: err.message
 			});
 		}
+
+
+		// function (err) {
+		// 	if (err) {
+		// 		console.log(err);
+		// 		throw err;
+		// 	}
+		// 	res.json({ success: true, message: "导入成功!" });
+		// });
+		// item.itemId is the max value
+
 	}
 }
 export default new Question();

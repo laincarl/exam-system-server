@@ -13,11 +13,11 @@ const router = express.Router();
 const { getAllPaper, getPaper, newPaper } = Paper;
 
 //取所有试卷
-router.get("/", passport(), getAllPaper);
+router.get("/", passport(["admin", "teacher"]), getAllPaper);
 //取单个试卷
 router.get("/paper", passport(), getPaper);
 // 建立新的试卷
-router.post("/new", passport(), newPaper);
+router.post("/new", passport(["admin", "teacher"]), newPaper);
 
 
 export default router;

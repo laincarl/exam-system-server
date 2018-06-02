@@ -92,7 +92,7 @@ class Bank {
 			const total_page = Math.ceil(count / pageSize);
 			if (!bank) {
 				throw new Error("未找到题库");
-			} else if (!questions || !count) {
+			} else if (!questions || isNaN(count)) {
 				throw new Error("未找到试题");
 			} else {
 				res.send({

@@ -39,7 +39,7 @@ class Exam {
 		this.getResultsAdmin = this.getResultsAdmin.bind(this);
 		this.getResult = this.getResult.bind(this);
 		this.submit = this.submit.bind(this);
-		this.newExam=this.newExam.bind(this);
+		this.newExam = this.newExam.bind(this);
 	}
 	/**
   * 
@@ -91,7 +91,7 @@ class Exam {
 				res.send(403, "已参加过该考试");
 			} else {
 				//不存在记录时再取考试
-				ExamModel.findOne({ id: req.query.id, closed: false }, ["-_id", "-questions._id"], (err, data) => {
+				ExamModel.findOne({ id: req.query.id, closed: false }, ["-_id"], (err, data) => {
 					if (err) {
 						console.log("err");
 					} else {
@@ -99,8 +99,8 @@ class Exam {
 							// console.log(data);
 							const { paper_id, range } = data;
 							if (moment(range.start_time).isBefore(new Date())
-                && moment(range.end_time).isAfter(new Date())) {
-								PaperModel.findOne({ id: paper_id }).populate({
+								&& moment(range.end_time).isAfter(new Date())) {
+								PaperModel.findOne({ id: paper_id }, ["-parts.questions.answers"]).populate({
 									path: "parts.questions",
 									select: "id title selects"
 								}).exec((err, paper) => {
@@ -244,10 +244,10 @@ class Exam {
 			} else {
 				const { paper_id, title, range, limit_time } = data;
 				PaperModel.findOne({ id: paper_id })
-				// .populate({
-				// 	path: "parts.questions",
-				// 	select: "id title selects answers"
-				// })
+					// .populate({
+					// 	path: "parts.questions",
+					// 	select: "id title selects answers"
+					// })
 					.exec((err, paper) => {
 						if (err) console.log(err);
 						if (paper) {
@@ -308,7 +308,7 @@ class Exam {
   * @param {any} res 
   * @memberof Exam
   */
-	async newExam (req, res)  {
+	async newExam(req, res) {
 		if (!req.body) {
 			console.log(req.body);
 			res.json({ success: false, message: "请输入您的账号密码." });

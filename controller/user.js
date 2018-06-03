@@ -95,7 +95,7 @@ class User {
 	async signup(req, res) {
 		if (!req.body.name || !req.body.password || !req.body.real_name) {
 			console.log(req.body.name);
-			res.json({ success: false, message: "请输入您的账号密码." });
+			res.json({ status: 0, message: "请输入您的账号密码." });
 		} else {
 			var newUser = new UserModel({
 				role: "student",
@@ -107,9 +107,9 @@ class User {
 			newUser.save((err) => {
 				if (err) {
 					console.log(err);
-					return res.json({ success: false, message: "注册失败!" });
+					return res.json({ status: 0, message: "注册失败!" });
 				}
-				res.json({ success: true, message: "成功创建新用户!" });
+				res.json({ status: 1, message: "成功创建新用户!" });
 			});
 		}
 	}
@@ -123,14 +123,14 @@ class User {
 	async deluser(req, res) {
 		const id = req.query.id;
 		if (!id) {
-			res.json({ success: false, message: "id为空" });
+			res.json({ status: 0, message: "id为空" });
 		} else {
 			UserModel.remove({ id: Number(id) }, (err) => {
 				if (err) {
 					console.log(err);
-					return res.json({ success: false, message: "移除失败!" });
+					return res.json({ status: 0, message: "移除失败!" });
 				}
-				res.json({ success: true, message: "移除成功!" });
+				res.json({ status: 1, message: "移除成功!" });
 			});
 		}
 	}
@@ -145,7 +145,7 @@ class User {
 		const { name, real_name, role, password } = req.body;
 		if (!name || !real_name || !role || !password) {
 			console.log(req.body.name);
-			res.json({ success: false, message: "请输入账号密码." });
+			res.json({ status: 0, message: "请输入账号密码." });
 		} else {
 			var newUser = new UserModel({
 				role,
@@ -156,9 +156,9 @@ class User {
 			// 保存用户账号
 			newUser.save((err) => {
 				if (err) {
-					return res.json({ success: false, message: "注册失败!" });
+					return res.json({ status: 0, message: "注册失败!" });
 				}
-				res.json({ success: true, message: "成功创建新用户!" });
+				res.json({ status: 1, message: "成功创建新用户!" });
 			});
 		}
 	}
@@ -173,16 +173,16 @@ class User {
 		const { id, name, real_name, role, initPassword } = req.body;
 		if (!id || !name || !real_name || !role) {
 			console.log(req.body.name);
-			res.json({ success: false, message: "请输入账号密码." });
+			res.json({ status: 0, message: "请输入账号密码." });
 		} else {
 			//初始化密码为学工号
 			const needUpdate = initPassword ? { name, real_name, role, password: bcrypt.hashSync(name, 10) } : { name, real_name, role };
 			UserModel.update({ id }, { $set: needUpdate }, (err) => {
 				if (err) {
 					console.log(err);
-					return res.json({ success: false, message: "修改失败!" });
+					return res.json({ status: 0, message: "修改失败!" });
 				}
-				res.json({ success: true, message: "修改成功!" });
+				res.json({ status: 1, message: "修改成功!" });
 			});
 		}
 	}
@@ -202,7 +202,7 @@ class User {
 			}
 			if (!user) {
 				res.status(401);
-				res.json({ success: false, message: "认证失败,用户不存在!" });
+				res.json({ status: 0, message: "认证失败,用户不存在!" });
 			} else if (user) {
 				// 检查密码是否正确
 				user.comparePassword(req.body.password, (err, isMatch) => {
@@ -218,7 +218,7 @@ class User {
 						});
 						res.cookie("token", token);//登录成功之后为客户端设置cookie
 						res.json({
-							success: true,
+							status: 1,
 							message: "验证成功!",
 							token: "Bearer " + token,
 							role: user.role,
@@ -226,7 +226,7 @@ class User {
 						});
 					} else {
 						res.status(401);
-						res.send({ success: false, message: "认证失败,密码错误!" });
+						res.send({ status: 0, message: "认证失败,密码错误!" });
 					}
 				});
 			}

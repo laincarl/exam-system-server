@@ -69,7 +69,7 @@ class Question {
 		// 		console.log(err);
 		// 		throw err;
 		// 	}
-		// 	res.json({ success: true, message: "导入成功!" });
+		// 	res.json({ status: 1, message: "导入成功!" });
 		// });
 		// item.itemId is the max value
 

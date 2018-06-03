@@ -82,47 +82,81 @@ class Exam {
   * @memberof Exam
   */
 	async getExam(req, res) {
-		ResultModel.findOne({ exam_id: req.query.id, user: req.user._id }, (err, data) => {
-			if (err) {
-				console.log(err);
+		const exam_id = req.query.id;
+		const user = req.user._id;
+		if (!exam_id || !user) {
+			res.send({
+				status: 0,
+				type: "NEED_PARAMETERS",
+				message: "缺少参数"
+			});
+			return;
+		}
+		try {
+			// 取result，判断是否参加考试
+			const result = await ResultModel.findOne({ exam_id, user });
+			// 定义当前用户考试结束时间，等于取试卷时间+考试时间限制。
+			let end_time = null;
+			if (result && result.handin) {
+				throw new Error("已参加过该考试");
+			} else if (result) {
+				end_time = result.end_time;
 			}
-			if (data) {
-				console.log(data);
-				res.send(403, "已参加过该考试");
-			} else {
-				//不存在记录时再取考试
-				ExamModel.findOne({ id: req.query.id, closed: false }, ["-_id"], (err, data) => {
-					if (err) {
-						console.log("err");
-					} else {
-						if (data) {
-							// console.log(data);
-							const { paper_id, range } = data;
-							if (moment(range.start_time).isBefore(new Date())
-								&& moment(range.end_time).isAfter(new Date())) {
-								PaperModel.findOne({ id: paper_id }, ["-parts.questions.answers"]).populate({
-									path: "parts.questions",
-									select: "id title selects"
-								}).exec((err, paper) => {
-									if (err) console.log(err);
-									if (paper) {
-										res.json({ ...data._doc, ...paper._doc, ...{ id: data._doc.id } });
-									} else {
-										res.send(403, "试卷不存在");
-									}
-									// console.log(story.questions);
-								});
-							} else {
-								res.send(403, "考试不在开启范围");
-							}
-						} else {
-							res.send(403, "考试不存在");
+			// 取考试信息
+			const exam = await ExamModel.findOne({ id: exam_id, closed: false }, ["-_id"]);
+			if (!exam) {
+				throw new Error("未找到考试");
+			}
+			const { paper_id, range } = exam;
+			// 判断考试是否在开启
+			if (moment(range.start_time).isBefore(new Date())
+				&& moment(range.end_time).isAfter(new Date())) {
+				// 查询试卷
+				const paper = await PaperModel.findOne({ id: paper_id }, ["-parts.questions.answers"]).populate({
+					path: "parts.questions",
+					select: "id title selects"
+				}).exec();
+				if (!paper) {
+					throw new Error("未找到试卷");
+				}
+				// 如果不存在result，则存下end_time
+				if (!result) {
+					const { paper_id, title, range, limit_time } = exam;
+					end_time = moment().add(limit_time, "minutes");
+					const newResult = new ResultModel({
+						end_time,
+						range,
+						limit_time,
+						exam_id,
+						exam_title: title,
+						paper_id,
+						user,
+						total_score: 0,
+						user_score: 0,
+						parts: []
+					});
+					await newResult.save();
+				}
+				// 返回试卷信息
+				res.send({
+					status: 1,
+					data: {
+						...exam._doc,
+						...paper._doc,
+						...{
+							id: exam._doc.id,
+							end_time
 						}
 					}
 				});
 			}
-		});
-
+		} catch (err) {
+			res.send({
+				status: 0,
+				type: "GET_ERROR",
+				message: err.message
+			});
+		}
 	}
 	/**
   * 关闭一个考试
@@ -142,12 +176,12 @@ class Exam {
 		});
 	}
 	/**
-  * 管理员获取所有用户考试结果
-  * 
-  * @param {any} req 
-  * @param {any} res 
-  * @memberof Exam
-  */
+		* 管理员获取所有用户考试结果
+		* 
+		* @param {any} req 
+		* @param {any} res 
+		* @memberof Exam
+		*/
 	async getResultsAdmin(req, res) {
 		// console.log(res.query)
 		const page = parseInt(req.query.page);
@@ -175,12 +209,12 @@ class Exam {
 		});
 	}
 	/**
-  * 用户获取自己考试结果
-  * 
-  * @param {any} req 
-  * @param {any} res 
-  * @memberof Exam
-  */
+		* 用户获取自己考试结果
+		* 
+		* @param {any} req 
+		* @param {any} res 
+		* @memberof Exam
+		*/
 	async getResults(req, res) {
 		// console.log(res.query)
 		const { _id } = req.user;
@@ -198,12 +232,12 @@ class Exam {
 		});
 	}
 	/**
-  * 查询单个考试结果详情
-  * 
-  * @param {any} req 
-  * @param {any} res 
-  * @memberof Exam
-  */
+		* 查询单个考试结果详情
+		* 
+		* @param {any} req 
+		* @param {any} res 
+		* @memberof Exam
+		*/
 	async getResult(req, res) {
 		// console.log(res.query)
 		const { _id } = req.user;
@@ -221,16 +255,17 @@ class Exam {
 		});
 	}
 	/**
-  * 交卷，进行打分
-  * 
-  * @param {any} req 
-  * @param {any} res 
-  * @memberof Exam
-  */
+		* 交卷，进行打分
+		* 
+		* @param {any} req 
+		* @param {any} res 
+		* @memberof Exam
+		*/
 	async submit(req, res) {
 		// console.log(req.body);
 		//前端传回来题号组成的数组
 		const { id, answers } = req.body;
+
 		//answers结构
 		// {
 		// 	1:'A',
@@ -302,16 +337,16 @@ class Exam {
 		});
 	}
 	/**
-  * 创建一个新考试
-  * 
-  * @param {any} req 
-  * @param {any} res 
-  * @memberof Exam
-  */
+		* 创建一个新考试
+		* 
+		* @param {any} req 
+		* @param {any} res 
+		* @memberof Exam
+		*/
 	async newExam(req, res) {
 		if (!req.body) {
 			console.log(req.body);
-			res.json({ success: false, message: "请输入您的账号密码." });
+			res.json({ status: 0, message: "请输入您的账号密码." });
 		} else {
 			// const { title,range } = req.body;
 			console.log(req.body);
@@ -321,7 +356,7 @@ class Exam {
 					console.log(err);
 					throw err;
 				}
-				res.json({ success: true, message: "创建成功!" });
+				res.json({ status: 1, message: "创建成功!" });
 			});
 			// const { title } = req.body;
 			// var newExam = new ExamModel({
@@ -332,7 +367,7 @@ class Exam {
 			//     console.log(err);
 			//     throw err;
 			//   }
-			//   res.json({ success: true, message: '创建成功!' });
+			//   res.json({ status: 1, message: '创建成功!' });
 			// });
 		}
 	}

@@ -123,7 +123,7 @@ class Paper {
 				console.log(err);
 				throw err;
 			}
-			res.json({ success: true, message: "创建成功!" });
+			res.json({ status: 1, message: "创建成功!" });
 		});
 
 	}

@@ -14,6 +14,13 @@ const { Schema } = mongoose;
 const ResultSchema = new Schema({
 	id: { type: Number, index: { unique: true } },
 	user: { type: Schema.Types.ObjectId, ref: "User" },
+	end_time: {
+		type: Date,
+	},
+	handin: {
+		type: Boolean,
+		default: false,
+	},
 	create_time: {
 		type: Date,
 		default: Date.now,
@@ -55,6 +62,8 @@ const ResultSchema = new Schema({
 		]
 	}],
 });
+// 联合唯一性索引，保证一个用户考试一次
+ResultSchema.index({ user: 1, exam_id: -1 }, { unique: true });
 //取数据getter生效，toJSON和toObject是必须的
 // 在创建文档时，获取自增ID值
 ResultSchema.pre("save", function (next) {

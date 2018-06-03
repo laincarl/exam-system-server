@@ -74,7 +74,7 @@ class User {
   */
 	async alluser(req, res) {
 		try {
-			const users = UserModel.find({}, ["id", "name", "real_name", "role", "-_id"]);
+			const users = await UserModel.find({}, ["id", "name", "real_name", "role", "-_id"]);
 			res.send({
 				status: 1,
 				data: users

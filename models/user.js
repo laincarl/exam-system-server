@@ -3,7 +3,7 @@ import mongoose from "mongoose";
 import Sequence from "./sequence";
 
 const { Schema } = mongoose;
-import  bcrypt  from "bcrypt";
+import bcrypt from "bcrypt";
 const UserSchema = new Schema({
 	id: { type: Number, index: { unique: true } },
 	name: {
@@ -11,7 +11,7 @@ const UserSchema = new Schema({
 		required: true,
 		unique: true
 	},
-	real_name:{
+	real_name: {
 		type: String,
 		required: true,
 	},
@@ -25,7 +25,7 @@ const UserSchema = new Schema({
 	},
 	url: {
 		type: String,
-		default:"images/default.png"
+		default: "images/default.png"
 	},
 	token: {
 		type: String
@@ -66,13 +66,16 @@ UserSchema.pre("save", function (next) {
 	}
 });
 // 校验用户输入密码是否正确
-UserSchema.methods.comparePassword = function (passw, cb) {
-	bcrypt.compare(passw, this.password, (err, isMatch) => {
-		if (err) {
-			return cb(err);
-		}
-		cb(null, isMatch);
+UserSchema.methods.comparePassword = function (password) {
+	const self = this;
+	return new Promise((resolve, reject) => {
+		console.log(password);
+		bcrypt.compare(password, self.password, (err, isMatch) => {
+			if (err) {
+				reject(err);
+			}
+			resolve(isMatch);
+		});
 	});
 };
-
 export default mongoose.model("User", UserSchema);

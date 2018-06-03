@@ -9,6 +9,7 @@
 import { Strategy } from "passport-http-bearer";
 import passport from "passport";
 import User from "./models/user";
+
 export default function (role = ["student", "teacher", "admin"]) {
 	let roles = role instanceof Array ? role : [role];
 	if (roles.includes("student")) {
@@ -17,20 +18,41 @@ export default function (role = ["student", "teacher", "admin"]) {
 		roles = ["teacher", "admin"];
 	}
 	passport.use(new Strategy(
-		function (token, done) {
-			User.findOne({
-				token: token
-			}, function (err, user) {
-				if (err) {					
-					return done(err);
-				}
+		async (token, done) => {
+			try {
+				const user = await User.findOne({ token });
 				if (user && roles.includes(user.role)) {
 					return done(null, user);
 				} else {
 					return done(null, false);
 				}
-			});
+			} catch (err) {
+				console.log("err");
+				return done(err);
+			}
 		}
 	));
-	return passport.authenticate("bearer", { session: false });
+	passport.serializeUser(function(user, done) {
+		done(null, user);
+	});
+	
+	passport.deserializeUser(function(user, done) {
+		done(null, user);
+	});
+	// 定制验证后的回调函数
+	return (req, res, next) => passport.authenticate("bearer", { session: false }, (err, user) => {
+		// console.log(err, user);
+		if (err) {
+			return next(err);
+		}
+		if (!user) {
+			// console.log(info.message);
+			return res.send(401, "Unauthorized");
+		}
+		req.logIn(user, function(err) {
+			if (err) { return next(err); }
+			return;
+		});
+		return next();
+	})(req, res, next);
 }

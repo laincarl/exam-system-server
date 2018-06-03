@@ -50,29 +50,33 @@ class Exam {
   */
 	async getAllExam(req, res) {
 		//取考试的同时把当前用户的考试结果取出，标记是否参加过
-		const { _id } = req.user;
-		ExamModel.find({ closed: false }).exec((err, exams) => {
-			if (err) console.log(err);
-			//深拷贝
+		const { user } = req;
+		try {
+			const [exams, results] = await Promise.all([
+				await ExamModel.find({ closed: false }),
+				await ResultModel.find({ user, handin: true })
+			]);
 			let examsModify = JSON.parse(JSON.stringify(exams));
-			ResultModel.find({ user: _id }, (err, results) => {
-				if (err) console.log(err);
-				if (results) {
-					results.forEach((result) => {
-						examsModify.forEach(exam => {
-							if (exam.id === result.exam_id) {
-								exam.join = true;
-								console.log(exam.id);
-							}
-						});
-					});
-					res.json(examsModify);
-				} else {
-					res.json(examsModify);
-				}
+			// 将参加过的考试标记
+			results.forEach((result) => {
+				examsModify.forEach(exam => {
+					if (exam.id === result.exam_id) {
+						exam.join = true;
+						console.log(exam.id);
+					}
+				});
 			});
-			// console.log(story.questions);
-		});
+			res.send({
+				status: 1,
+				data: examsModify
+			});
+		} catch (err) {
+			res.send({
+				status: 0,
+				type: "GET_ERROR",
+				message: err.message
+			});
+		}
 	}
 	/**
   * 
@@ -109,47 +113,48 @@ class Exam {
 			}
 			const { paper_id, range } = exam;
 			// 判断考试是否在开启
-			if (moment(range.start_time).isBefore(new Date())
-				&& moment(range.end_time).isAfter(new Date())) {
-				// 查询试卷
-				const paper = await PaperModel.findOne({ id: paper_id }, ["-parts.questions.answers"]).populate({
-					path: "parts.questions",
-					select: "id title selects"
-				}).exec();
-				if (!paper) {
-					throw new Error("未找到试卷");
-				}
-				// 如果不存在result，则存下end_time
-				if (!result) {
-					const { paper_id, title, range, limit_time } = exam;
-					end_time = moment().add(limit_time, "minutes");
-					const newResult = new ResultModel({
-						end_time,
-						range,
-						limit_time,
-						exam_id,
-						exam_title: title,
-						paper_id,
-						user,
-						total_score: 0,
-						user_score: 0,
-						parts: []
-					});
-					await newResult.save();
-				}
-				// 返回试卷信息
-				res.send({
-					status: 1,
-					data: {
-						...exam._doc,
-						...paper._doc,
-						...{
-							id: exam._doc.id,
-							end_time
-						}
-					}
-				});
+			if (!moment(range.start_time).isBefore(moment()) || !moment(range.end_time).isAfter(moment())) {
+				throw new Error("考试不在开启范围");
 			}
+			// 判断当前用户时间是否用完
+			if (!moment(end_time).isAfter(moment())) {
+				throw new Error("考试时间已用尽");
+			}
+			// 查询试卷,不取答案
+			const paper = await PaperModel.findOne({ id: paper_id }, ["-parts.questions.answers"]);
+			if (!paper) {
+				throw new Error("未找到试卷");
+			}
+			// 如果不存在result，则存下end_time
+			if (!result) {
+				const { paper_id, title, range, limit_time } = exam;
+				end_time = moment().add(limit_time, "minutes");
+				const newResult = new ResultModel({
+					end_time,
+					range,
+					limit_time,
+					exam_id,
+					exam_title: title,
+					paper_id,
+					user,
+					total_score: 0,
+					user_score: 0,
+					parts: []
+				});
+				await newResult.save();
+			}
+			// 返回试卷信息
+			res.send({
+				status: 1,
+				data: {
+					...exam._doc,
+					...paper._doc,
+					...{
+						id: exam._doc.id,
+						end_time
+					}
+				}
+			});
 		} catch (err) {
 			res.send({
 				status: 0,
@@ -167,13 +172,24 @@ class Exam {
   */
 	async deleteExam(req, res) {
 		// console.log(req.query.id);
-		ExamModel.update({ id: req.query.id }, { $set: { closed: true } }, (err) => {
-			if (!err) {
-				res.send("关闭成功");
-			} else {
-				console.log(err);
-			}
-		});
+		const id = req.query.id;
+		if (!id) {
+			res.send({
+				status: 0,
+				type: "NEED_ID",
+				message: "缺少考试ID"
+			});
+			return;
+		}
+		try {
+			await ExamModel.update({ id: req.query.id }, { $set: { closed: true } });
+		} catch (err) {
+			res.send({
+				status: 0,
+				type: "DELETE_ERROR",
+				message: err.message
+			});
+		}
 	}
 	/**
 		* 管理员获取所有用户考试结果
@@ -186,27 +202,41 @@ class Exam {
 		// console.log(res.query)
 		const page = parseInt(req.query.page);
 		const pageSize = 5;
-		ResultModel.count({}, (err, count) => {
-			// console.log(page, count);
-			ResultModel.find({}, ["-_id", "-__v"])
+		if (page == undefined) {
+			res.send({
+				status: 0,
+				type: "NEED_PARAMETERS",
+				message: "缺少参数"
+			});
+		}
+		try {
+			const count = await ResultModel.count({ handin: true });
+			const results = await ResultModel.find({ handin: true }, ["-_id", "-__v"])
 				.skip(page * pageSize)
-				.limit(5)
+				.limit(pageSize)
 				.sort({ "_id": -1 })
 				.populate({
 					path: "user",
 					select: "name -_id"
 				})
-				.exec((err, data) => {
-					if (err) console.log(err);
-					if (data) {
-						const total_page = Math.ceil(count / pageSize);
-						res.json({ count, total_page, current_page: page, results: data });
-					} else {
-						res.status(404);
-						res.json({ message: "考试结果不存在" });
-					}
-				});
-		});
+				.exec();
+			const total_page = Math.ceil(count / pageSize);
+			res.send({
+				status: 1,
+				data: {
+					count,
+					total_page,
+					current_page: page,
+					results
+				}
+			});
+		} catch (err) {
+			res.send({
+				status: 0,
+				type: "GET_ERROR",
+				message: err.message
+			});
+		}
 	}
 	/**
 		* 用户获取自己考试结果
@@ -216,20 +246,20 @@ class Exam {
 		* @memberof Exam
 		*/
 	async getResults(req, res) {
-		// console.log(res.query)
-		const { _id } = req.user;
-		ResultModel.find({ user: _id }, ["-_id", "-__v"]).populate({
-			path: "user",
-			select: "name -_id"
-		}).exec((err, data) => {
-			if (err) console.log(err);
-			if (data) {
-				res.json(data);
-			} else {
-				res.status(404);
-				res.json({ message: "考试结果不存在" });
-			}
-		});
+		const { user } = req;
+		try {
+			const result = await ResultModel.find({ user, handin: true }, ["-_id", "-__v"]);
+			res.send({
+				status: 1,
+				data: result
+			});
+		} catch (err) {
+			res.send({
+				status: 0,
+				type: "GET_ERROR",
+				message: err.message
+			});
+		}
 	}
 	/**
 		* 查询单个考试结果详情
@@ -240,19 +270,32 @@ class Exam {
 		*/
 	async getResult(req, res) {
 		// console.log(res.query)
-		const { _id } = req.user;
-		ResultModel.findOne({ exam_id: req.query.id, user: _id }, ["-_id", "-__v"]).populate({
-			path: "user",
-			select: "name -_id"
-		}).exec((err, data) => {
-			if (err) console.log(err);
-			if (data) {
-				res.json(data);
-			} else {
-				res.status(404);
-				res.json({ message: "考试结果不存在" });
+		const { user } = req;
+		const exam_id = req.query.id;
+		if (!exam_id) {
+			res.send({
+				status: 0,
+				type: "NEED_ID",
+				message: "缺少考试ID"
+			});
+			return;
+		}
+		try {
+			const result = await ResultModel.findOne({ exam_id: req.query.id, user, handin: true }, ["-_id", "-__v"]);
+			if (!result) {
+				throw new Error("未参加该考试");
 			}
-		});
+			res.send({
+				status: 1,
+				data: result
+			});
+		} catch (err) {
+			res.send({
+				status: 0,
+				type: "GET_ERROR",
+				message: err.message
+			});
+		}
 	}
 	/**
 		* 交卷，进行打分
@@ -264,77 +307,84 @@ class Exam {
 	async submit(req, res) {
 		// console.log(req.body);
 		//前端传回来题号组成的数组
-		const { id, answers } = req.body;
-
+		// const { id, answers } = req.body;
+		const answers = req.body.answers;
+		const exam_id = req.body.id;
+		const user = req.user._id;
+		if (!exam_id || !answers || !user) {
+			res.send({
+				status: 0,
+				type: "NEED_PARAMETERS",
+				message: "缺少参数"
+			});
+			return;
+		}
 		//answers结构
 		// {
 		// 	1:'A',
 		// }
-		const { _id } = req.user;
 		//先取到考试，从考试中取到试卷
-		ExamModel.findOne({ id }, ["-_id", "-questions._id"], (err, data) => {
-			if (err) {
-				console.log("err");
-				res.json({ message: "考试不存在" });
-			} else {
-				const { paper_id, title, range, limit_time } = data;
-				PaperModel.findOne({ id: paper_id })
-					// .populate({
-					// 	path: "parts.questions",
-					// 	select: "id title selects answers"
-					// })
-					.exec((err, paper) => {
-						if (err) console.log(err);
-						if (paper) {
-							//深拷贝，之后对值进行修改
-							const result = JSON.parse(JSON.stringify(paper._doc));
-							let total_score = 0;
-							let user_score = 0;
-							const { parts } = result;
-							parts.forEach(part => {
-								const { type, score, num, questions } = part;
-								total_score += score * num;
-								questions.forEach(question => {
-									question["user_answer"] = answers[question.id];
-									if (shouldGetScore(type, answers[question.id], question.answers)) {
-										user_score += score;
-									}
-									// console.log(question);
-								});
-							});
-
-							const newResult = new ResultModel({
-								range,
-								limit_time,
-								exam_id: id,
-								exam_title: title,
-								paper_id,
-								user: _id,
-								total_score,
-								user_score,
-								parts
-							});
-							newResult.save((err) => {
-								if (err) {
-									console.log(err);
-									throw err;
-								}
-								res.json({
-									exam_id: id,
-									exam_title: title,
-									paper_id,
-									user: _id,
-									total_score,
-									parts
-								});
-							});
-						} else {
-							res.status(404);
-							res.json({ message: "试卷不存在" });
-						}
-					});
+		try {
+			const exam = await ExamModel.findOne({ id: exam_id }, ["-_id", "-questions._id"]);
+			if (!exam) {
+				throw new Error("未找到考试");
 			}
-		});
+			const { paper_id, title } = exam;
+			const paper = await PaperModel.findOne({ id: paper_id });
+			if (!paper) {
+				throw new Error("未找到试卷");
+			}
+			//深拷贝，之后对值进行修改
+			const result = JSON.parse(JSON.stringify(paper._doc));
+			if (!result) {
+				throw new Error("结果出现错误");
+			} else if (result.handin) {
+				throw new Error("已参加过该考试");
+			} else if (!moment(result.end_time).isBefore(moment())) {
+				throw new Error("考试时间已用完");
+			}
+			let total_score = 0;
+			let user_score = 0;
+			const { parts } = result;
+			parts.forEach(part => {
+				const { type, score, num, questions } = part;
+				total_score += score * num;
+				questions.forEach(question => {
+					question["user_answer"] = answers[question.id];
+					if (shouldGetScore(type, answers[question.id], question.answers)) {
+						user_score += score;
+					}
+					// console.log(question);
+				});
+			});
+			// 将考试结果存入
+			await ResultModel.update({ exam_id, user }, {
+				$set:
+					{
+						handin: true,
+						total_score,
+						user_score,
+						parts
+					}
+			});
+			res.send({
+				status: 1,
+				data: {
+					exam_id,
+					exam_title: title,
+					paper_id,
+					user,
+					total_score,
+					parts
+				}
+			});
+		} catch (err) {
+			res.send({
+				status: 0,
+				type: "SUBMIT_ERROR",
+				message: err.message
+			});
+		}
 	}
 	/**
 		* 创建一个新考试
@@ -344,31 +394,34 @@ class Exam {
 		* @memberof Exam
 		*/
 	async newExam(req, res) {
-		if (!req.body) {
-			console.log(req.body);
-			res.json({ status: 0, message: "请输入您的账号密码." });
-		} else {
-			// const { title,range } = req.body;
-			console.log(req.body);
-			var newExam = new ExamModel(req.body);
-			newExam.save((err) => {
-				if (err) {
-					console.log(err);
-					throw err;
-				}
-				res.json({ status: 1, message: "创建成功!" });
+
+		const { title, range, limit_time, paper_id } = req.body;
+		if (!title || !range || !limit_time || !paper_id) {
+			res.send({
+				status: 0,
+				type: "NEED_PARAMETERS",
+				message: "缺少参数"
 			});
-			// const { title } = req.body;
-			// var newExam = new ExamModel({
-			//   title,
-			// });
-			// newExam.save((err) => {
-			//   if (err) {
-			//     console.log(err);
-			//     throw err;
-			//   }
-			//   res.json({ status: 1, message: '创建成功!' });
-			// });
+			return;
+		}
+		try {
+			var newExam = new ExamModel({
+				title,
+				range,
+				limit_time,
+				paper_id
+			});
+			await newExam.save();
+			res.send({
+				status: 1,
+				data: "创建成功"
+			});
+		} catch (err) {
+			res.send({
+				status: 0,
+				type: "CREATE_ERROR",
+				message: "创建失败"
+			});
 		}
 	}
 }

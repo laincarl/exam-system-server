@@ -40,19 +40,27 @@ class User {
 	 */
 	async getUserById(req, res) {
 		const { id } = req.query;
+		if (!id) {
+			res.send({
+				status: 0,
+				type: "NEED_ID",
+				message: "缺少用户ID"
+			});
+			return;
+		}
 		try {
 			const user = await UserModel.findOne({ id }, ["id", "name", "real_name", "role", "-_id"]);
 			if (!user) {
 				throw new Error("没有找到用户");
 			}
-			res.json({
+			res.send({
 				status: 1,
 				data: user
 			});
 		} catch (err) {
-			res.json({
+			res.send({
 				status: 0,
-				// type:'',
+				type: "GET_ERROR",
 				message: err.message
 			});
 		}
@@ -65,14 +73,19 @@ class User {
   * @memberof User
   */
 	async alluser(req, res) {
-		UserModel.find({}, ["id", "name", "real_name", "role", "-_id"], (err, data) => {
-			if (err) {
-				console.log("err");
-			} else {
-				res.json(data);
-				// console.log(data);
-			}
-		});
+		try {
+			const users = UserModel.find({}, ["id", "name", "real_name", "role", "-_id"]);
+			res.send({
+				status: 1,
+				data: users
+			});
+		} catch (err) {
+			res.send({
+				status: 0,
+				type: "GET_ERROR",
+				message: err.message
+			});
+		}
 	}
 	/**
   * 
@@ -83,7 +96,15 @@ class User {
   */
 	async info(req, res) {
 		const { name, real_name, url, role } = req.user;
-		res.json({ name, real_name, role, url: `${config.server}${url}` });
+		res.send({
+			status: 1,
+			data: {
+				name,
+				real_name,
+				role,
+				url: `${config.server}${url}`
+			}
+		});
 	}
 	/**
   * 
@@ -93,25 +114,36 @@ class User {
   * @memberof User
   */
 	async signup(req, res) {
-		if (!req.body.name || !req.body.password || !req.body.real_name) {
-			console.log(req.body.name);
-			res.json({ status: 0, message: "请输入您的账号密码." });
-		} else {
+		const { name, password, real_name } = req.body;
+		if (!name || !password || !real_name) {
+			res.send({
+				status: 0,
+				type: "NEED_PARAMETERS",
+				message: "缺少参数"
+			});
+			return;
+		}
+		try {
 			var newUser = new UserModel({
 				role: "student",
-				name: req.body.name,
-				real_name: req.body.real_name,
-				password: req.body.password
+				name,
+				real_name,
+				password,
 			});
 			// 保存用户账号
-			newUser.save((err) => {
-				if (err) {
-					console.log(err);
-					return res.json({ status: 0, message: "注册失败!" });
-				}
-				res.json({ status: 1, message: "成功创建新用户!" });
+			await newUser.save();
+			res.send({
+				status: 1,
+				data: "成功创建新用户!"
+			});
+		} catch (err) {
+			res.send({
+				status: 0,
+				type: "SIGN_UP_ERROR",
+				message: "注册失败"
 			});
 		}
+
 	}
 	/**
   * 
@@ -121,16 +153,26 @@ class User {
   * @memberof User
   */
 	async deluser(req, res) {
-		const id = req.query.id;
+		const { id } = req.query;
 		if (!id) {
-			res.json({ status: 0, message: "id为空" });
-		} else {
-			UserModel.remove({ id: Number(id) }, (err) => {
-				if (err) {
-					console.log(err);
-					return res.json({ status: 0, message: "移除失败!" });
-				}
-				res.json({ status: 1, message: "移除成功!" });
+			res.send({
+				status: 0,
+				type: "NEED_ID",
+				message: "缺少用户ID"
+			});
+			return;
+		}
+		try {
+			await UserModel.remove({ id: Number(id) });
+			res.send({
+				status: 1,
+				data: "删除成功"
+			});
+		} catch (err) {
+			res.send({
+				status: 0,
+				type: "DELETE_ERROR",
+				message: err.message
 			});
 		}
 	}
@@ -142,11 +184,16 @@ class User {
   * @memberof User
   */
 	async adduser(req, res) {
-		const { name, real_name, role, password } = req.body;
-		if (!name || !real_name || !role || !password) {
-			console.log(req.body.name);
-			res.json({ status: 0, message: "请输入账号密码." });
-		} else {
+		const { name, password, role, real_name } = req.body;
+		if (!name || !password || !role || !real_name) {
+			res.send({
+				status: 0,
+				type: "NEED_PARAMETERS",
+				message: "缺少参数"
+			});
+			return;
+		}
+		try {
 			var newUser = new UserModel({
 				role,
 				real_name,
@@ -154,11 +201,16 @@ class User {
 				password
 			});
 			// 保存用户账号
-			newUser.save((err) => {
-				if (err) {
-					return res.json({ status: 0, message: "注册失败!" });
-				}
-				res.json({ status: 1, message: "成功创建新用户!" });
+			await newUser.save();
+			res.send({
+				status: 1,
+				data: "创建成功"
+			});
+		} catch (err) {
+			res.send({
+				status: 0,
+				type: "CREATE_ERROR",
+				message: err.message
 			});
 		}
 	}
@@ -170,19 +222,30 @@ class User {
   * @memberof User
   */
 	async edituser(req, res) {
-		const { id, name, real_name, role, initPassword } = req.body;
-		if (!id || !name || !real_name || !role) {
-			console.log(req.body.name);
-			res.json({ status: 0, message: "请输入账号密码." });
-		} else {
+		const { id, name, initPassword, role, real_name } = req.body;
+		if (!id || !name || !role || !real_name) {
+			res.send({
+				status: 0,
+				type: "NEED_PARAMETERS",
+				message: "缺少参数"
+			});
+			return;
+		}
+		try {
 			//初始化密码为学工号
-			const needUpdate = initPassword ? { name, real_name, role, password: bcrypt.hashSync(name, 10) } : { name, real_name, role };
-			UserModel.update({ id }, { $set: needUpdate }, (err) => {
-				if (err) {
-					console.log(err);
-					return res.json({ status: 0, message: "修改失败!" });
-				}
-				res.json({ status: 1, message: "修改成功!" });
+			const needUpdate = initPassword ?
+				{ name, real_name, role, password: bcrypt.hashSync(name, 10) } :
+				{ name, real_name, role };
+			await UserModel.update({ id }, { $set: needUpdate });
+			res.send({
+				status: 1,
+				data: "修改成功"
+			});
+		} catch (err) {
+			res.send({
+				status: 0,
+				type: "EDIT_ERROR",
+				message: err.message
 			});
 		}
 	}
@@ -194,43 +257,47 @@ class User {
   * @memberof User
   */
 	async accesstoken(req, res) {
-		UserModel.findOne({
-			name: req.body.name
-		}, (err, user) => {
-			if (err) {
-				throw err;
-			}
+		console.log(req.body);
+		const { name, password } = req.body;
+		if (!name || !password) {
+			res.send({
+				status: 0,
+				type: "NEED_PARAMETERS",
+				message: "缺少参数"
+			});
+			return;
+		}
+		try {
+			const user = await UserModel.findOne({ name });
 			if (!user) {
-				res.status(401);
-				res.json({ status: 0, message: "认证失败,用户不存在!" });
-			} else if (user) {
-				// 检查密码是否正确
-				user.comparePassword(req.body.password, (err, isMatch) => {
-					if (isMatch && !err) {
-						var token = jwt.sign({ name: user.name }, config.secret, {
-							expiresIn: 10080  // token到期时间设置
-						});
-						user.token = token;
-						user.save(function (err) {
-							if (err) {
-								res.send(err);
-							}
-						});
-						res.cookie("token", token);//登录成功之后为客户端设置cookie
-						res.json({
-							status: 1,
-							message: "验证成功!",
-							token: "Bearer " + token,
-							role: user.role,
-							name: user.name
-						});
-					} else {
-						res.status(401);
-						res.send({ status: 0, message: "认证失败,密码错误!" });
-					}
-				});
+				throw new Error("用户不存在");
 			}
-		});
+			const isMatch = await user.comparePassword(password);
+			if (!isMatch) {
+				throw new Error("认证失败,密码错误!");
+			}
+			var token = jwt.sign({ name: user.name }, config.secret, {
+				expiresIn: 10080  // token到期时间设置
+			});
+			user.token = token;
+			await user.save();
+			res.cookie("token", token);//登录成功之后为客户端设置cookie
+			res.send({
+				status: 1,
+				data: {
+					message: "验证成功!",
+					token: "Bearer " + token,
+					role: user.role,
+					name: user.name
+				}
+			});
+		} catch (err) {
+			res.send({
+				status: 0,
+				type: "LOGIN_ERROR",
+				message: err.message
+			});
+		}
 	}
 	/**
   * 

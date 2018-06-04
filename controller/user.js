@@ -23,6 +23,7 @@ class User {
 	constructor() {
 		this.getUserById = this.getUserById.bind(this);
 		this.accesstoken = this.accesstoken.bind(this);
+		this.resetPassword = this.resetPassword.bind(this);
 		this.adduser = this.adduser.bind(this);
 		this.deluser = this.deluser.bind(this);
 		this.edituser = this.edituser.bind(this);
@@ -295,6 +296,55 @@ class User {
 			res.send({
 				status: 0,
 				type: "LOGIN_ERROR",
+				message: err.message
+			});
+		}
+	}
+	/**
+	 *用户更改密码
+	 *
+	 * @param {*} req
+	 * @param {*} res
+	 * @memberof User
+	 */
+	async resetPassword(req, res) {
+		const { _id } = req.user;
+		
+		const { password_old, password, password_repeat } = req.body;
+		if (!password_old || !password_repeat || !password) {
+			res.send({
+				status: 0,
+				type: "NEED_PARAMETERS",
+				message: "缺少参数"
+			});
+			return;
+		}
+		console.log({password_old, password, password_repeat});
+		try {
+			const user = await UserModel.findOne({ _id });
+			if (!user) {
+				throw new Error("用户不存在");
+			}
+			const isMatch = await user.comparePassword(password_old);
+			if (!isMatch) {
+				throw new Error("旧密码错误!");
+			}
+			if (password !== password_repeat) {
+				throw new Error("两次输入密码不同!");
+			}
+
+			user.password = password_repeat;
+			await user.save();
+			res.send({
+				status: 1,
+				data: {
+					message: "更改成功!",
+				}
+			});
+		} catch (err) {
+			res.send({
+				status: 0,
+				type: "MODIFY_ERROR",
 				message: err.message
 			});
 		}

@@ -12,7 +12,7 @@ import passport from "../passport";
 // import checkPermission from "../middlewares/checkPermission";
 const router = express.Router();
 
-const { getUserById, adduser, deluser, edituser, signup, head, info, alluser } = User;
+const { getUserById, adduser, deluser, edituser, accesstoken, resetPassword, signup, head, info, alluser } = User;
 
 router.get("/", passport("admin"), getUserById);
 // 管理员添加账户
@@ -22,7 +22,8 @@ router.put("/edituser", passport("admin"), edituser);
 // 注册账户
 router.post("/signup", signup);
 // 检查用户名与密码并生成一个accesstoken如果验证通过
-router.post("/accesstoken", User.accesstoken);
+router.post("/accesstoken", accesstoken);
+router.post("/reset_password", passport(), resetPassword);
 // 上传头像
 router.post("/head", passport(), head);
 // passport-http-bearer token 中间件验证

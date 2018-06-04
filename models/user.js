@@ -32,6 +32,26 @@ const UserSchema = new Schema({
 	}
 });
 // 添加用户保存时中间件对password进行bcrypt加密,这样保证用户密码只有用户本人知道
+// UserSchema.pre("update", function (next) {
+// 	var user = this;
+// 	if (this.isModified("password") || this.isNew) {
+// 		bcrypt.genSalt(10, function (err, salt) {
+// 			if (err) {
+// 				return next(err);
+// 			}
+// 			bcrypt.hash(user.password, salt, function (err, hash) {
+// 				if (err) {
+// 					return next(err);
+// 				}
+// 				user.password = hash;
+// 				next();
+// 			});
+// 		});
+// 	} else {
+// 		return next();
+// 	}
+// });
+// 添加用户保存时中间件对password进行bcrypt加密,这样保证用户密码只有用户本人知道
 UserSchema.pre("save", function (next) {
 	var user = this;
 	if (this.isModified("password") || this.isNew) {

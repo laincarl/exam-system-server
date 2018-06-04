@@ -203,7 +203,7 @@ class Exam {
 		const page = parseInt(req.query.page);
 		const pageSize = 5;
 		const { filter, filterText } = req.query;
-		console.log(filter, filterText);
+		// console.log(filter, filterText);
 		if (page == undefined) {
 			res.send({
 				status: 0,
@@ -221,7 +221,7 @@ class Exam {
 					search[filter] = { $regex: reg };
 				}
 			}
-			console.log(search);
+			// console.log(search);
 			// 查询加模糊搜索
 			const results = await ResultModel.aggregate([
 				{
@@ -261,7 +261,7 @@ class Exam {
 				}
 			]);
 			const count = results.length;
-			console.log(results);
+			// console.log(results);
 			// const count = await ResultModel.count({
 			// 	handin: true,
 			// 	$or: [ //多条件，数组

@@ -117,7 +117,7 @@ class Exam {
 				throw new Error("考试不在开启范围");
 			}
 			// 判断当前用户时间是否用完
-			if (!moment(end_time).isAfter(moment())) {
+			if (end_time && !moment(end_time).isAfter(moment())) {
 				throw new Error("考试时间已用尽");
 			}
 			// 查询试卷,不取答案
@@ -202,6 +202,8 @@ class Exam {
 		// console.log(res.query)
 		const page = parseInt(req.query.page);
 		const pageSize = 5;
+		const { filter, filterText } = req.query;
+		console.log(filter, filterText);
 		if (page == undefined) {
 			res.send({
 				status: 0,
@@ -210,16 +212,76 @@ class Exam {
 			});
 		}
 		try {
-			const count = await ResultModel.count({ handin: true });
-			const results = await ResultModel.find({ handin: true }, ["-_id", "-__v"])
-				.skip(page * pageSize)
-				.limit(pageSize)
-				.sort({ "_id": -1 })
-				.populate({
-					path: "user",
-					select: "name -_id"
-				})
-				.exec();
+			const reg = new RegExp(filterText, "i"); //不区分大小写
+			const search = {};
+			if (filter && filter != "") {
+				if (filter === "real_name") {
+					search[`users.${filter}`] = { $regex: reg };
+				} else {
+					search[filter] = { $regex: reg };
+				}
+			}
+			console.log(search);
+			// 查询加模糊搜索
+			const results = await ResultModel.aggregate([
+				{
+					$lookup: {
+						from: "users",
+						localField: "user",
+						foreignField: "_id",
+						as: "users"
+					}
+				},
+				{
+					$match: {
+						handin: true,
+						$or: [ 
+							//可以对多个条件搜索，数组
+							search,
+						]
+					}
+				},
+				{
+					$skip: page * pageSize
+				},
+				{
+					$limit: pageSize
+				},
+				{
+					// 增加字段
+					$addFields: {
+						// 增加user字段，arrayElemAt访问数组第一个，此处users由lookup添加而来
+						user: { $arrayElemAt: ["$users", 0] }
+					}
+				},
+				{
+					$project: {
+						users: 0
+					}
+				}
+			]);
+			const count = results.length;
+			console.log(results);
+			// const count = await ResultModel.count({
+			// 	handin: true,
+			// 	$or: [ //多条件，数组
+			// 		search,
+			// 	]
+			// });
+			// const results = await ResultModel.find({
+			// 	handin: true,
+			// 	$or: [ //多条件，数组
+			// 		search,
+			// 	]
+			// }, ["-_id", "-__v"])
+			// 	.skip(page * pageSize)
+			// 	.limit(pageSize)
+			// 	.sort({ "_id": -1 })
+			// 	.populate({
+			// 		path: "user",
+			// 		select: "name -_id"
+			// 	})
+			// 	.exec();
 			const total_page = Math.ceil(count / pageSize);
 			res.send({
 				status: 1,
@@ -334,18 +396,19 @@ class Exam {
 			if (!paper) {
 				throw new Error("未找到试卷");
 			}
+			const result = await ResultModel.findOne({ exam_id, user });
 			//深拷贝，之后对值进行修改
-			const result = JSON.parse(JSON.stringify(paper._doc));
+			const paper_deep = JSON.parse(JSON.stringify(paper._doc));
 			if (!result) {
 				throw new Error("结果出现错误");
 			} else if (result.handin) {
 				throw new Error("已参加过该考试");
-			} else if (!moment(result.end_time).isBefore(moment())) {
+			} else if (!moment(result.end_time).isAfter(moment())) {
 				throw new Error("考试时间已用完");
 			}
 			let total_score = 0;
 			let user_score = 0;
-			const { parts } = result;
+			const { parts } = paper_deep;
 			parts.forEach(part => {
 				const { type, score, num, questions } = part;
 				total_score += score * num;

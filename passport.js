@@ -11,22 +11,12 @@ import passport from "passport";
 import User from "./models/user";
 
 export default function (role = ["student", "teacher", "admin"]) {
-	console.log(role);
-	let roles = role instanceof Array ? role : [role];
-	if (roles.includes("student")) {
-		roles = ["student", "teacher", "admin"];
-	} else if (role.includes("teacher")) {
-		roles = ["teacher", "admin"];
-	}
-	// 暂时
-	roles = ["student", "teacher", "admin"];
-	// use只会有一个，所以造成role只有最后一个生效
+
 	passport.use(new Strategy(
 		async (token, done) => {
 			try {
-				const user = await User.findOne({ token });
-				console.log(role);
-				if (user && roles.includes(user.role)) {
+				const user = await User.findOne({ token });		
+				if (user ) {
 					return done(null, user);
 				} else {
 					return done(null, false);
@@ -47,10 +37,17 @@ export default function (role = ["student", "teacher", "admin"]) {
 	// 定制验证后的回调函数
 	return (req, res, next) => passport.authenticate("bearer", { session: false }, (err, user) => {
 		// console.log(err, user);
+		let roles = role instanceof Array ? role : [role];
+		if (roles.includes("student")) {
+			roles = ["student", "teacher", "admin"];
+		} else if (role.includes("teacher")) {
+			roles = ["teacher", "admin"];
+		}
 		if (err) {
 			return next(err);
 		}
-		if (!user) {
+		// 用户登录，以及权限符合
+		if (!user|| !roles.includes(user.role)) {
 			// console.log(info.message);
 			return res.send(401, "Unauthorized");
 		}

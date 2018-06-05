@@ -2,7 +2,7 @@
  * @Author: LainCarl 
  * @Date: 2018-05-20 19:24:06 
  * @Last Modified by: LainCarl
- * @Last Modified time: 2018-05-20 19:41:35
+ * @Last Modified time: 2018-06-04 20:45:35
  * @Feature: exam的controller 
  */
 import ExamModel from "../models/exam";
@@ -34,6 +34,7 @@ class Exam {
 	constructor() {
 		this.getAllExam = this.getAllExam.bind(this);
 		this.getExam = this.getExam.bind(this);
+		this.getExamDetail = this.getExamDetail.bind(this);
 		this.deleteExam = this.deleteExam.bind(this);
 		this.getResults = this.getResults.bind(this);
 		this.getResultsAdmin = this.getResultsAdmin.bind(this);
@@ -163,6 +164,34 @@ class Exam {
 			});
 		}
 	}
+	async getExamDetail(req, res) {
+		const id = req.query.id;
+		if (!id) {
+			res.send({
+				status: 0,
+				type: "NEED_ID",
+				message: "缺少考试ID"
+			});
+			return;
+		}
+		try {
+			const exam = await ExamModel.findOne({ id });
+			if (!exam) {
+				throw new Error("未找到考试");
+			}
+			res.send({
+				status: 1,
+				data: exam
+			});
+		} catch (err) {
+			res.send({
+				status: 0,
+				type: "GET_ERROR",
+				message: err.message
+			});
+		}
+
+	}
 	/**
   * 关闭一个考试
   * 
@@ -182,7 +211,7 @@ class Exam {
 			return;
 		}
 		try {
-			await ExamModel.update({ id: req.query.id }, { $set: { closed: true } });
+			await ExamModel.update({ id }, { $set: { closed: true } });
 		} catch (err) {
 			res.send({
 				status: 0,
@@ -235,7 +264,7 @@ class Exam {
 				{
 					$match: {
 						handin: true,
-						$or: [ 
+						$or: [
 							//可以对多个条件搜索，数组
 							search,
 						]

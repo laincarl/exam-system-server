@@ -11,13 +11,15 @@ import passport from "../passport";
 import Exam from "../controller/exam";
 const router = express.Router();
 
-const { getAllExam, getExam, deleteExam, getResults, getResultsAdmin, getResult, submit, newExam } = Exam;
+const { getAllExam, getExam,getExamDetail, deleteExam, getResults, getResultsAdmin, getResult, submit, newExam } = Exam;
 //取所有考试
 router.get("/", passport(), getAllExam);
 //取单个考试
 router.get("/exam", passport(), getExam);
 //关闭一个考试，伪删除
 router.delete("/exam", passport(), deleteExam);
+//取所有考试结果
+router.get("/exam/detail", passport(["admin","teacher"]), getExamDetail);
 //取所有考试结果
 router.get("/manage/results", passport(["admin","teacher"]), getResultsAdmin);
 //普通用户取所有考试结果

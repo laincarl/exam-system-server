@@ -9,7 +9,6 @@
 import express from "express";
 import User from "../controller/user";
 import passport from "../passport";
-// import checkPermission from "../middlewares/checkPermission";
 const router = express.Router();
 
 const { getUserById, adduser, deluser, edituser, accesstoken, resetPassword, signup, head, info, alluser } = User;

@@ -11,16 +11,21 @@ import passport from "passport";
 import User from "./models/user";
 
 export default function (role = ["student", "teacher", "admin"]) {
+	console.log(role);
 	let roles = role instanceof Array ? role : [role];
 	if (roles.includes("student")) {
 		roles = ["student", "teacher", "admin"];
 	} else if (role.includes("teacher")) {
 		roles = ["teacher", "admin"];
 	}
+	// 暂时
+	roles = ["student", "teacher", "admin"];
+	// use只会有一个，所以造成role只有最后一个生效
 	passport.use(new Strategy(
 		async (token, done) => {
 			try {
 				const user = await User.findOne({ token });
+				console.log(role);
 				if (user && roles.includes(user.role)) {
 					return done(null, user);
 				} else {

@@ -11,6 +11,8 @@ import jwt from "jsonwebtoken";
 import config from "../config";
 import multer from "multer";
 import bcrypt from "bcrypt";
+import randomName from "chinese-random-name";
+
 //只能以Form形式上传name为mFile的文件
 //var upload = multer({ dest: 'upload/'}).single('mFile');
 const upload = multer({ dest: "temp/" }).any();
@@ -31,6 +33,7 @@ class User {
 		this.head = this.head.bind(this);
 		this.info = this.info.bind(this);
 		this.alluser = this.alluser.bind(this);
+		this.fake = this.fake.bind(this);
 	}
 	/**
 	 * 管理员通过id获取用户
@@ -217,6 +220,44 @@ class User {
 	}
 	/**
   * 
+  * 假数据
+  * @param {any} req 
+  * @param {any} res 
+  * @memberof User
+  */
+	async fake(req, res) {
+		// const { name, password, role, real_name } = req.body;
+		const amount = 30;
+		let needInsert = [];
+		for (let i = 0; i < amount; i += 1) {
+			var newUser = new UserModel({
+				role: "student",
+				real_name: randomName.generate(),
+				name: 20141740 + i,
+				password: 20141740 + i
+			});
+			needInsert.push(
+				await newUser.save()
+			);
+		}
+		// if (!name || !password || !role || !real_name) {
+		// 	res.send({
+		// 		status: 0,
+		// 		type: "NEED_PARAMETERS",
+		// 		message: "缺少参数"
+		// 	});
+		// 	return;
+		// }
+		Promise.all(needInsert).then(() => {
+			res.send({
+				status: 1,
+				data: "创建成功"
+			});
+			console.log("done");
+		});
+	}
+	/**
+  * 
   * 编辑用户
   * @param {any} req 
   * @param {any} res 
@@ -309,7 +350,7 @@ class User {
 	 */
 	async resetPassword(req, res) {
 		const { _id } = req.user;
-		
+
 		const { password_old, password, password_repeat } = req.body;
 		if (!password_old || !password_repeat || !password) {
 			res.send({
@@ -319,7 +360,7 @@ class User {
 			});
 			return;
 		}
-		console.log({password_old, password, password_repeat});
+		console.log({ password_old, password, password_repeat });
 		try {
 			const user = await UserModel.findOne({ _id });
 			if (!user) {

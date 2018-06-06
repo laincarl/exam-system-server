@@ -176,12 +176,22 @@ class Exam {
 		}
 		try {
 			const exam = await ExamModel.findOne({ id });
+			const results = await ResultModel.find({
+				handin: true,
+				exam_id:id
+			}, ["-_id", "-__v"])					
+				.populate({
+					path: "user",
+					select: "-_id"
+				});			
 			if (!exam) {
 				throw new Error("未找到考试");
 			}
+			let examAnalyze=JSON.parse(JSON.stringify(exam));
+			examAnalyze.results=results;
 			res.send({
 				status: 1,
-				data: exam
+				data:examAnalyze
 			});
 		} catch (err) {
 			res.send({

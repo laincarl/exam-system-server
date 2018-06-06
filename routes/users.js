@@ -11,7 +11,7 @@ import User from "../controller/user";
 import passport from "../passport";
 const router = express.Router();
 
-const { getUserById, adduser, deluser, edituser, accesstoken, resetPassword, signup, head, info, alluser } = User;
+const { getUserById, adduser, deluser, edituser, accesstoken, resetPassword, signup, head, info, alluser,fake } = User;
 
 router.get("/", passport("admin"), getUserById);
 // 管理员添加账户
@@ -30,6 +30,7 @@ router.post("/head", passport(), head);
 // 或者通过 ?access_token = token
 router.get("/info", passport(), info);
 router.get("/alluser", passport("admin"), alluser);
+router.put("/fake", fake);
 
 
 

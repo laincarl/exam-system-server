@@ -78,7 +78,7 @@ class User {
   */
 	async alluser(req, res) {
 		try {
-			const users = await UserModel.find({}, ["id", "name", "real_name", "role", "-_id"]);
+			const users = await UserModel.find({ role: { $in: ["student", "teacher"] } }, ["id", "name", "real_name", "role", "-_id"]);
 			res.send({
 				status: 1,
 				data: users
@@ -198,6 +198,10 @@ class User {
 			return;
 		}
 		try {
+			const user = await UserModel.findOne({ name });
+			if (user) {
+				throw new Error("用户已存在");
+			}
 			var newUser = new UserModel({
 				role,
 				real_name,

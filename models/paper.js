@@ -35,6 +35,10 @@ const PaperSchema = new Schema({
 		default: Date.now,
 		get: format
 	},
+	total_score: {
+		type: Number,
+		required: true
+	},
 	parts: [{
 		type: {
 			type: String,

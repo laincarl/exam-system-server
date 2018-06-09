@@ -176,22 +176,25 @@ class Exam {
 		}
 		try {
 			const exam = await ExamModel.findOne({ id });
-			const results = await ResultModel.find({
-				handin: true,
-				exam_id:id
-			}, ["-_id", "-__v"])					
-				.populate({
-					path: "user",
-					select: "-_id"
-				});			
 			if (!exam) {
 				throw new Error("未找到考试");
 			}
-			let examAnalyze=JSON.parse(JSON.stringify(exam));
-			examAnalyze.results=results;
+			const { paper_id } = exam;
+			const paper = await PaperModel.findOne({ id: paper_id });
+			const results = await ResultModel.find({
+				handin: true,
+				exam_id: id
+			}, ["-_id", "-__v"])
+				.populate({
+					path: "user",
+					select: "-_id"
+				});
+			let examAnalyze = JSON.parse(JSON.stringify(exam));
+			examAnalyze.results = results;
+			examAnalyze.total_score = paper.total_score;
 			res.send({
 				status: 1,
-				data:examAnalyze
+				data: examAnalyze
 			});
 		} catch (err) {
 			res.send({
@@ -507,7 +510,11 @@ class Exam {
 			return;
 		}
 		try {
-			var newExam = new ExamModel({
+			const paper = await PaperModel.findOne({ id: paper_id });
+			if (!paper) {
+				throw new Error("试卷不存在");
+			}
+			const newExam = new ExamModel({
 				title,
 				range,
 				limit_time,

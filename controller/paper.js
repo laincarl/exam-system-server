@@ -98,10 +98,12 @@ class Paper {
 				message: "缺少信息"
 			});
 		}
+		let total_score = 0;
 		await Promise.all(
 			parts.map(async (part) => {
-				const { bank_id, num } = part;
+				const { bank_id, num, score } = part;
 				// console.log(bank_id, num);
+				total_score += num * score;
 				const questions = await QuestionModel.aggregate([{
 					$match: {
 						bank_id
@@ -116,6 +118,7 @@ class Paper {
 		);
 		var newPaper = new PaperModel({
 			title,
+			total_score,
 			parts,
 		});
 		newPaper.save((err) => {

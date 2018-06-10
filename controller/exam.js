@@ -256,7 +256,7 @@ class Exam {
 		try {
 			const reg = new RegExp(filterText, "i"); //不区分大小写
 			const search = {};
-			if (filter && filter != "") {
+			if (filter && filter != "" && filterText != "") {
 				if (filter === "real_name") {
 					search[`users.${filter}`] = { $regex: reg };
 				} else {
@@ -464,12 +464,12 @@ class Exam {
 			// 将考试结果存入
 			await ResultModel.update({ exam_id, user }, {
 				$set:
-					{
-						handin: true,
-						total_score,
-						user_score,
-						parts
-					}
+				{
+					handin: true,
+					total_score,
+					user_score,
+					parts
+				}
 			});
 			res.send({
 				status: 1,

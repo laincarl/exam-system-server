@@ -302,14 +302,13 @@ class Exam {
 					}
 				}
 			]);
-			const count = results.length;
-			// console.log(results);
-			// const count = await ResultModel.count({
-			// 	handin: true,
-			// 	$or: [ //多条件，数组
-			// 		search,
-			// 	]
-			// });
+
+			const count = await ResultModel.count({
+				handin: true,
+				$or: [ //多条件，数组
+					search,
+				]
+			});
 			// const results = await ResultModel.find({
 			// 	handin: true,
 			// 	$or: [ //多条件，数组

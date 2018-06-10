@@ -38,6 +38,7 @@ class Bank {
 		// }
 		try {
 			const banks = await BankModel.find(type ? { type } : {}, ["-_id", "-__v"]);
+			
 			if (!banks) {
 				throw new Error("未找到题库");
 			} else {

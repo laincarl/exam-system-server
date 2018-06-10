@@ -99,35 +99,47 @@ class Paper {
 			});
 		}
 		let total_score = 0;
-		await Promise.all(
-			parts.map(async (part) => {
-				const { bank_id, num, score } = part;
-				// console.log(bank_id, num);
-				total_score += num * score;
-				const questions = await QuestionModel.aggregate([{
-					$match: {
-						bank_id
+		try {
+			await Promise.all(
+				parts.map(async (part, i) => {
+					const { bank_id, num, score } = part;
+					// console.log(bank_id, num);
+					total_score += num * score;
+					const count = await QuestionModel.count({ bank_id });
+					if (!count || count < num) {
+						throw new Error(`第${i + 1}大题试题数量不足`);
 					}
-				}, {
-					$sample: {
-						size: num
-					}
-				}]);
-				part.questions = questions;
-			})
-		);
-		var newPaper = new PaperModel({
-			title,
-			total_score,
-			parts,
-		});
-		newPaper.save((err) => {
-			if (err) {
-				console.log(err);
-				throw err;
-			}
-			res.json({ status: 1, message: "创建成功!" });
-		});
+					const questions = await QuestionModel.aggregate([{
+						$match: {
+							bank_id
+						}
+					}, {
+						$sample: {
+							size: num
+						}
+					}]);
+					part.questions = questions;
+				})
+			);
+			var newPaper = new PaperModel({
+				title,
+				total_score,
+				parts,
+			});
+			await newPaper.save();
+			res.send({
+				status: 1,
+				data: "创建成功!"
+			});
+
+		} catch (err) {
+			res.send({
+				status: 0,
+				type: "CREATE_ERR",
+				message: err.message
+			});
+		}
+
 
 	}
 }

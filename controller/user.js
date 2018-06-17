@@ -326,6 +326,7 @@ class User {
 				expiresIn: 10080  // token到期时间设置
 			});
 			user.token = token;
+			const { real_name, url, role } = user;
 			await user.save();
 			res.cookie("token", token);//登录成功之后为客户端设置cookie
 			res.send({
@@ -333,8 +334,10 @@ class User {
 				data: {
 					message: "验证成功!",
 					token: "Bearer " + token,
-					role: user.role,
-					name: user.name
+					real_name,
+					role,
+					name,
+					url: `${config.server}${url}`
 				}
 			});
 		} catch (err) {

@@ -9,10 +9,33 @@ import config from "./config"; //全局配置
 import cookieParser from "cookie-parser";
 import bodyParser from "body-parser";
 import http from "http";
+const swaggerUi = require("swagger-ui-express");
+import swaggerJSDoc from "swagger-jsdoc";
 // const CamelCaseToUnderScoreCase=require("./middlewares/CamelCaseToUnderScoreCase");
 let port = process.env.PORT || 9000;
 
 const app = express();
+// swagger definition
+const swaggerDefinition = {
+	info: {
+		title: "Node Swagger API",
+		version: "1.0.0",
+		description: "Demonstrating how to describe a RESTful API with Swagger",
+	},
+	host: "localhost:3000",
+	basePath: "/",
+};
+// options for the swagger docs
+const options = {
+	// import swaggerDefinitions
+	swaggerDefinition: swaggerDefinition,
+	// path to the API docs
+	apis: ["./routes/*.js"],
+};
+// initialize swagger-jsdoc
+const swaggerSpec = swaggerJSDoc(options);
+app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
+
 // 跨域设置
 app.all("*", function (req, res, next) {
 	res.header("Access-Control-Allow-Credentials", true);
@@ -33,13 +56,13 @@ app.use(bodyParser.json()); // 调用bodyParser模块以便程序正确解析bod
 
 // app.use(CamelCaseToUnderScoreCase());
 routes(app); // 路由引入
-app.use(function(err, req, res, next) {
+app.use(function(err, req, res) {
 	console.error(err.stack);
 	res.status(500).send("Something broke!");
 });
+
 mongoose.Promise = global.Promise;
 mongoose.connect(config.database); // 连接数据库
-
 
 // 创建一个Socket.IO实例，并把它传递给服务器
 var server = http.createServer(app);

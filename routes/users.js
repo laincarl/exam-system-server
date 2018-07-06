@@ -12,7 +12,21 @@ import passport from "../passport";
 const router = express.Router();
 
 const { getUserById, adduser, deluser, edituser, accesstoken, resetPassword, signup, head, info, alluser,fake } = User;
-
+/**
+ * @swagger
+ * /user:
+ *   get:
+ *     tags:
+ *       - Puppies
+ *     description: 返回用户列表
+ *     produces:
+ *       - application/json
+ *     responses:
+ *       200:
+ *         description: An array of puppies
+ *         schema:
+ *           $ref: '#/definitions/Puppy'
+ */
 router.get("/", passport("admin"), getUserById);
 // 管理员添加账户
 router.post("/adduser", passport("admin"), adduser);

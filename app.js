@@ -9,8 +9,10 @@ import config from "./config"; //全局配置
 import cookieParser from "cookie-parser";
 import bodyParser from "body-parser";
 import http from "http";
+import https from "https";
 const swaggerUi = require("swagger-ui-express");
 import swaggerJSDoc from "swagger-jsdoc";
+import fs from "fs";
 // const CamelCaseToUnderScoreCase=require("./middlewares/CamelCaseToUnderScoreCase");
 let port = process.env.PORT || 9000;
 
@@ -65,7 +67,12 @@ mongoose.Promise = global.Promise;
 mongoose.connect(config.database); // 连接数据库
 
 // 创建一个Socket.IO实例，并把它传递给服务器
-var server = http.createServer(app);
+var privatekey = fs.readFileSync("./static/server_no_passwd.key", "utf8");
+
+var certificate = fs.readFileSync("./static/server.crt", "utf8");
+
+var httpsOptions = { key: privatekey, cert: certificate };
+var server = https.createServer(httpsOptions,app);
 const socket = io.listen(server);
 
 // 添加一个连接监听器

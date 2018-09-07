@@ -27,9 +27,9 @@ const UserSchema = new Schema({
 		type: String,
 		default: "images/default.png"
 	},
-	token: {
-		type: String
-	}
+	// token: {
+	// 	type: String
+	// }
 });
 // 添加用户保存时中间件对password进行bcrypt加密,这样保证用户密码只有用户本人知道
 // UserSchema.pre("update", function (next) {

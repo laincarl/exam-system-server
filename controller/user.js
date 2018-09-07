@@ -323,11 +323,12 @@ class User {
 				throw new Error("认证失败,密码错误!");
 			}
 			var token = jwt.sign({ name: user.name }, config.secret, {
-				expiresIn: 10080  // token到期时间设置
+				expiresIn: config.expiresIn  // token到期时间设置
 			});
-			user.token = token;
+			// 不将token保存到数据库
+			// user.token = token;			
+			// await user.save();
 			const { real_name, url, role } = user;
-			await user.save();
 			res.cookie("token", token);//登录成功之后为客户端设置cookie
 			res.send({
 				status: 1,
